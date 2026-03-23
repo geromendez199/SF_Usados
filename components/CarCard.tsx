@@ -17,8 +17,15 @@ export default function CarCard({ listing, index = 0 }: { listing: Listing; inde
         {/* Image */}
         <div style={{ position: 'relative', paddingBottom: '62%', background: '#111', overflow: 'hidden' }}>
           {img ? (
-            <Image src={img} alt={listing.title} fill className="object-cover"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
+            <Image
+              src={img}
+              alt={listing.title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              loading={index < 3 ? 'eager' : 'lazy'}
+              priority={index < 1}
+            />
           ) : (
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2a2a2a" strokeWidth="1.5">

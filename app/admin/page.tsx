@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useDeferredValue, useMemo, useRef } from 'react'
 import { getSupabaseClient } from '@/lib/supabase'
 import type { Listing } from '@/types'
 import { formatPrice, formatKm } from '@/lib/utils'
@@ -260,6 +260,7 @@ export default function AdminPage() {
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive' | 'featured'>('all')
   const [search, setSearch] = useState('')
   const [toast, setToast] = useState('')
+  const deferredSearch = useDeferredValue(search)
 
   useEffect(() => {
     const checkSession = async () => {
@@ -329,18 +330,22 @@ export default function AdminPage() {
     await supabase.from('listings').delete().eq('id', id); fetchListings()
   }
 
-  const filtered = listings.filter(l =>
-    !search || l.title.toLowerCase().includes(search.toLowerCase()) ||
-    l.brand?.toLowerCase().includes(search.toLowerCase()) ||
-    l.model?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = useMemo(() => {
+    const q = deferredSearch.trim().toLowerCase()
+    if (!q) return listings
+    return listings.filter(l =>
+      l.title.toLowerCase().includes(q) ||
+      l.brand?.toLowerCase().includes(q) ||
+      l.model?.toLowerCase().includes(q)
+    )
+  }, [listings, deferredSearch])
 
-  const stats = {
+  const stats = useMemo(() => ({
     total: listings.length,
     active: listings.filter(l => l.is_active).length,
     featured: listings.filter(l => l.is_featured).length,
     views: listings.reduce((a, l) => a + (l.views || 0), 0),
-  }
+  }), [listings])
 
   if (checkingSession) {
     return (

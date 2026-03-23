@@ -64,7 +64,14 @@ export default function CarDetail({ listing }: { listing: Listing }) {
           <div>
             <div style={{ position: 'relative', paddingBottom: '54%', background: '#111', borderRadius: 14, overflow: 'hidden', border: '1px solid #1e1e1e', marginBottom: 8 }}>
               {listing.images?.length > 0 ? (
-                <Image src={listing.images[safeActiveImg]} alt={listing.title} fill className="object-cover" priority />
+                <Image
+                  src={listing.images[safeActiveImg]}
+                  alt={listing.title}
+                  fill
+                  className="object-cover"
+                  priority
+                  sizes="(max-width: 768px) 100vw, 1100px"
+                />
               ) : (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#222" strokeWidth="1">
@@ -88,6 +95,7 @@ export default function CarDetail({ listing }: { listing: Listing }) {
                     type="button"
                     onClick={() => setActiveImg(i)}
                     aria-label={`Ver imagen ${i + 1} de ${listing.images.length}`}
+                    aria-current={safeActiveImg === i}
                     style={{
                       flexShrink: 0, width: 76, height: 54, position: 'relative',
                       borderRadius: 8, overflow: 'hidden', padding: 0, background: 'none',
@@ -95,7 +103,14 @@ export default function CarDetail({ listing }: { listing: Listing }) {
                       cursor: 'pointer', transition: 'border-color 0.15s',
                     }}
                   >
-                    <Image src={img} alt="" fill className="object-cover" />
+                    <Image
+                      src={img}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      loading="lazy"
+                      sizes="76px"
+                    />
                   </button>
                 ))}
               </div>
