@@ -3,22 +3,26 @@ import Navbar from '@/components/Navbar'
 
 export default function NotFound() {
   return (
-    <main style={{ minHeight: '100vh', background: '#0A0A0A' }}>
+    <main style={{ minHeight: '100vh' }}>
       <Navbar />
-      <div style={{ maxWidth: 500, margin: '0 auto', padding: '100px 20px', textAlign: 'center' }}>
-        <p style={{ fontSize: 64, marginBottom: 20 }}>🚗</p>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontStyle: 'italic', fontSize: 36, color: '#fff', marginBottom: 12 }}>
-          Auto no encontrado
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: 'min(120px, 20vw) max(20px, env(safe-area-inset-left)) 80px max(20px, env(safe-area-inset-right))', textAlign: 'center' }}>
+        <p style={{ fontSize: 52, marginBottom: 24, opacity: 0.3 }} aria-hidden>🚗</p>
+        <h1
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 600,
+            fontSize: 'clamp(28px, 5vw, 34px)',
+            color: 'var(--text)',
+            marginBottom: 12,
+            letterSpacing: '-0.03em',
+          }}
+        >
+          No encontramos esta publicación
         </h1>
-        <p style={{ fontFamily: 'var(--font-body)', color: '#555', marginBottom: 32 }}>
-          Esta publicación no existe o fue eliminada.
+        <p style={{ fontFamily: 'var(--font-body)', color: 'var(--text-tertiary)', marginBottom: 36, fontSize: 17, lineHeight: 1.5 }}>
+          Puede haber sido eliminada o el enlace es incorrecto.
         </p>
-        <Link href="/" style={{
-          display: 'inline-block', background: '#fff', color: '#0A0A0A',
-          fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14,
-          letterSpacing: '0.04em', textTransform: 'uppercase',
-          padding: '14px 28px', borderRadius: 10, textDecoration: 'none',
-        }}>
+        <Link href="/" className="btn-primary">
           Volver al inicio
         </Link>
       </div>

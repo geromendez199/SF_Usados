@@ -80,6 +80,7 @@ sf-usados/
 │       └── route.ts
 ├── components/
 │   ├── Navbar.tsx
+│   ├── BrandMark.tsx
 │   ├── CarCard.tsx
 │   └── Filters.tsx
 ├── lib/

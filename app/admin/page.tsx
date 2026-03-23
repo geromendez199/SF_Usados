@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback, useDeferredValue, useMemo, useRef } from 'react'
 import { getSupabaseClient } from '@/lib/supabase'
 import type { Listing } from '@/types'
-import { formatPrice, formatKm } from '@/lib/utils'
 import { CAR_BRANDS, FUEL_TYPES, TRANSMISSION_TYPES, ARGENTINA_PROVINCES, YEAR_OPTIONS } from '@/types'
-import SFLogo from '@/components/SFLogo'
+import BrandMark from '@/components/BrandMark'
+import AdminListingsVirtualList from '@/components/AdminListingsVirtualList'
 
 const WA_NUMBER = '5493492273442'
 
@@ -259,7 +259,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive' | 'featured'>('all')
   const [search, setSearch] = useState('')
-  const [toast, setToast] = useState('')
+  const [toast, setToast] = useState<{ msg: string; kind: 'ok' | 'err' } | null>(null)
   const deferredSearch = useDeferredValue(search)
 
   useEffect(() => {
@@ -277,7 +277,10 @@ export default function AdminPage() {
     checkSession()
   }, [])
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3500) }
+  const showToast = (msg: string, kind: 'ok' | 'err' = 'ok') => {
+    setToast({ msg, kind })
+    setTimeout(() => setToast(null), 3500)
+  }
 
   const login = async () => {
     setPwError('')
@@ -298,36 +301,55 @@ export default function AdminPage() {
     }
   }
 
-  const fetchListings = useCallback(async () => {
+  const fetchListings = useCallback(async (silent = false) => {
     if (!supabase) {
       setListings([])
       return
     }
 
-    setLoading(true)
+    if (!silent) setLoading(true)
     let q = supabase.from('listings').select('*').order('created_at', { ascending: false })
     if (filter === 'active') q = q.eq('is_active', true)
     if (filter === 'inactive') q = q.eq('is_active', false)
     if (filter === 'featured') q = q.eq('is_featured', true)
     const { data } = await q.limit(200)
     setListings((data as Listing[]) || [])
-    setLoading(false)
+    if (!silent) setLoading(false)
   }, [filter, supabase])
 
   useEffect(() => { if (authed) fetchListings() }, [authed, fetchListings])
 
   const toggleActive = async (l: Listing) => {
     if (!supabase) return
-    await supabase.from('listings').update({ is_active: !l.is_active }).eq('id', l.id); fetchListings()
+    const next = !l.is_active
+    setListings(prev => prev.map(x => (x.id === l.id ? { ...x, is_active: next } : x)))
+    const { error } = await supabase.from('listings').update({ is_active: next }).eq('id', l.id)
+    if (error) {
+      setListings(prev => prev.map(x => (x.id === l.id ? { ...x, is_active: l.is_active } : x)))
+      showToast('No se pudo actualizar el estado', 'err')
+    }
   }
+
   const toggleFeatured = async (l: Listing) => {
     if (!supabase) return
-    await supabase.from('listings').update({ is_featured: !l.is_featured }).eq('id', l.id); fetchListings()
+    const next = !l.is_featured
+    setListings(prev => prev.map(x => (x.id === l.id ? { ...x, is_featured: next } : x)))
+    const { error } = await supabase.from('listings').update({ is_featured: next }).eq('id', l.id)
+    if (error) {
+      setListings(prev => prev.map(x => (x.id === l.id ? { ...x, is_featured: l.is_featured } : x)))
+      showToast('No se pudo actualizar destacado', 'err')
+    }
   }
+
   const deleteListing = async (id: string) => {
     if (!supabase) return
     if (!confirm('¿Eliminar este auto?')) return
-    await supabase.from('listings').delete().eq('id', id); fetchListings()
+    setListings(prev => prev.filter(x => x.id !== id))
+    const { error } = await supabase.from('listings').delete().eq('id', id)
+    if (error) {
+      showToast('No se pudo eliminar', 'err')
+      void fetchListings(true)
+    }
   }
 
   const filtered = useMemo(() => {
@@ -360,11 +382,11 @@ export default function AdminPage() {
     return (
       <main style={{ minHeight: '100vh', background: '#0A0A0A', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
         <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: 20, padding: '44px 36px', width: '100%', maxWidth: 380, textAlign: 'center' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-            <SFLogo size={40} />
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+            <BrandMark size="lg" />
           </div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontStyle: 'italic', fontSize: 28, color: '#fff', letterSpacing: '-0.03em', marginBottom: 4 }}>
-            SF_Usados
+          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontStyle: 'italic', fontSize: 28, color: '#8A8A8A', letterSpacing: '-0.03em', marginBottom: 4 }}>
+            _Usados · Admin
           </h1>
           <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: '#444', marginBottom: 28 }}>Panel de administración</p>
           <input type="password" placeholder="Contraseña" value={password}
@@ -382,17 +404,24 @@ export default function AdminPage() {
   return (
     <main style={{ minHeight: '100vh', background: '#0A0A0A' }}>
       {toast && (
-        <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 100, background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 10, padding: '12px 20px', fontFamily: 'var(--font-body)', fontSize: 14, color: '#fff', boxShadow: '0 8px 32px rgba(0,0,0,0.8)' }}>
-          ✓ {toast}
+        <div style={{
+          position: 'fixed', top: 20, right: 20, zIndex: 100,
+          background: toast.kind === 'err' ? '#2a1010' : '#1a1a1a',
+          border: `1px solid ${toast.kind === 'err' ? '#4a2020' : '#2a2a2a'}`,
+          borderRadius: 10, padding: '12px 20px', fontFamily: 'var(--font-body)', fontSize: 14,
+          color: toast.kind === 'err' ? '#ff8a8a' : '#fff',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
+        }}>
+          {toast.kind === 'err' ? '⚠ ' : '✓ '}{toast.msg}
         </div>
       )}
 
       {/* Header */}
       <div style={{ background: '#0d0d0d', borderBottom: '1px solid #161616', padding: '0 20px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 60 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <SFLogo size={24} />
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontStyle: 'italic', fontSize: 18, color: '#fff', letterSpacing: '-0.02em' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <BrandMark size="md" />
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontStyle: 'italic', fontSize: 18, color: '#8A8A8A', letterSpacing: '-0.02em' }}>
               Admin
             </span>
           </div>
@@ -474,79 +503,55 @@ export default function AdminPage() {
 
             <div style={{ background: '#111', border: '1px solid #1a1a1a', borderRadius: 12, overflow: 'hidden' }}>
               {loading ? (
-                <div style={{ padding: '60px', textAlign: 'center', color: '#444', fontFamily: 'var(--font-body)' }}>Cargando...</div>
+                <div style={{ padding: 14 }}>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1.5fr 0.65fr 0.85fr 0.5fr 0.45fr 0.95fr 1.15fr',
+                      gap: 8,
+                      padding: '10px 14px',
+                      borderBottom: '1px solid #1a1a1a',
+                    }}
+                  >
+                    {Array.from({ length: 7 }).map((_, i) => (
+                      <div key={i} className="skeleton" style={{ height: 12, borderRadius: 4 }} />
+                    ))}
+                  </div>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1.5fr 0.65fr 0.85fr 0.5fr 0.45fr 0.95fr 1.15fr',
+                        gap: 8,
+                        alignItems: 'center',
+                        padding: '14px',
+                        borderBottom: '1px solid #161616',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div className="skeleton" style={{ width: 56, height: 40, borderRadius: 6, flexShrink: 0 }} />
+                        <div className="skeleton" style={{ height: 16, flex: 1, borderRadius: 4 }} />
+                      </div>
+                      <div className="skeleton" style={{ height: 14, borderRadius: 4 }} />
+                      <div className="skeleton" style={{ height: 16, borderRadius: 4 }} />
+                      <div className="skeleton" style={{ height: 14, borderRadius: 4 }} />
+                      <div className="skeleton" style={{ height: 14, borderRadius: 4 }} />
+                      <div className="skeleton" style={{ height: 28, width: 72, borderRadius: 6 }} />
+                      <div className="skeleton" style={{ height: 14, borderRadius: 4 }} />
+                    </div>
+                  ))}
+                </div>
               ) : filtered.length === 0 ? (
                 <div style={{ padding: '60px', textAlign: 'center', color: '#333', fontFamily: 'var(--font-body)' }}>Sin resultados</div>
               ) : (
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-body)', fontSize: 13 }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid #1a1a1a' }}>
-                        {['Auto', 'Versión', 'Precio', 'Km', 'Año', 'Estado', 'Acciones'].map(h => (
-                          <th key={h} style={{ textAlign: 'left', padding: '12px 14px', color: '#333', fontWeight: 600, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filtered.map(l => (
-                        <tr key={l.id} style={{ borderBottom: '1px solid #161616', opacity: l.is_active ? 1 : 0.35 }}
-                          onMouseEnter={e => (e.currentTarget.style.background = '#161616')}
-                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                          <td style={{ padding: '12px 14px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              {l.images?.[0] ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={l.images[0]} alt="" style={{ width: 56, height: 40, borderRadius: 6, objectFit: 'cover', border: '1px solid #222' }} />
-                              ) : (
-                                <div style={{ width: 56, height: 40, borderRadius: 6, background: '#1a1a1a', border: '1px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🚗</div>
-                              )}
-                              <div>
-                                <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontStyle: 'italic', fontSize: 14, color: '#ddd', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  {l.brand} {l.model}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td style={{ padding: '12px 14px', color: '#555', fontSize: 12 }}>{l.version || '—'}</td>
-                          <td style={{ padding: '12px 14px', fontFamily: 'var(--font-display)', fontWeight: 800, fontStyle: 'italic', fontSize: 14, color: '#ccc' }}>
-                            {formatPrice(l.price, l.currency)}
-                          </td>
-                          <td style={{ padding: '12px 14px', color: '#555', fontSize: 12 }}>{formatKm(l.km)}</td>
-                          <td style={{ padding: '12px 14px', color: '#555', fontSize: 12 }}>{l.year}</td>
-                          <td style={{ padding: '12px 14px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                              <span style={{ display: 'inline-flex', fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4, width: 'fit-content', background: l.is_active ? 'rgba(34,197,94,0.08)' : '#181818', color: l.is_active ? '#22c55e' : '#444', border: `1px solid ${l.is_active ? 'rgba(34,197,94,0.15)' : '#222'}` }}>
-                                {l.is_active ? '✓ Activo' : '⏸ Pausado'}
-                              </span>
-                              {l.is_featured && (
-                                <span style={{ display: 'inline-flex', fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4, width: 'fit-content', background: 'rgba(255,255,255,0.04)', color: '#666', border: '1px solid #222' }}>
-                                  ★ Destacado
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td style={{ padding: '12px 14px' }}>
-                            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                              {[
-                                { label: 'Ver', color: '#555', action: () => window.open(`/listing/${l.id}`, '_blank') },
-                                { label: l.is_active ? 'Pausar' : 'Activar', color: '#555', action: () => toggleActive(l) },
-                                { label: l.is_featured ? 'Quitar ★' : 'Destacar', color: '#666', action: () => toggleFeatured(l) },
-                                { label: 'Eliminar', color: '#3a3a3a', hoverColor: '#ff4444', action: () => deleteListing(l.id) },
-                              ].map(btn => (
-                                <button key={btn.label} onClick={btn.action}
-                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: btn.color, fontSize: 12, fontWeight: 600, padding: 0, transition: 'color 0.15s' }}
-                                  onMouseEnter={e => (e.currentTarget.style.color = btn.hoverColor || '#fff')}
-                                  onMouseLeave={e => (e.currentTarget.style.color = btn.color)}>
-                                  {btn.label}
-                                </button>
-                              ))}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <AdminListingsVirtualList
+                  rows={filtered}
+                  onToggleActive={toggleActive}
+                  onToggleFeatured={toggleFeatured}
+                  onDelete={deleteListing}
+                  onOpen={id => window.open(`/listing/${id}`, '_blank')}
+                />
               )}
             </div>
             <p style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: '#333', textAlign: 'center', marginTop: 12 }}>

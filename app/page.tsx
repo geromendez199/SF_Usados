@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { getSupabaseClient } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
-import SFLogo from '@/components/SFLogo'
+import BrandMark from '@/components/BrandMark'
 import CarCard from '@/components/CarCard'
 import Filters from '@/components/Filters'
 import type { Listing } from '@/types'
@@ -33,60 +33,70 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
   const regular = listings.filter(l => !l.is_featured)
 
   return (
-    <main style={{ minHeight: '100vh', background: '#0A0A0A' }}>
+    <main style={{ minHeight: '100vh' }}>
       <Navbar />
 
-      {/* Hero */}
-      <section style={{ position: 'relative', overflow: 'hidden', padding: '60px 20px 52px', borderBottom: '1px solid #161616' }}>
-        {/* Grid bg */}
-        <div style={{
-          position: 'absolute', inset: 0, opacity: 0.025,
-          backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
-        }} />
-        {/* Radial glow */}
-        <div style={{
-          position: 'absolute', top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 600, height: 300,
-          background: 'radial-gradient(ellipse, rgba(255,255,255,0.03) 0%, transparent 70%)',
-          pointerEvents: 'none',
-        }} />
+      <section
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          padding: 'clamp(48px, 10vw, 96px) max(20px, env(safe-area-inset-left)) clamp(40px, 8vw, 72px) max(20px, env(safe-area-inset-right))',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        <div className="apple-hero-glow" aria-hidden />
+        <div className="apple-grid-fine" aria-hidden />
 
-        <div style={{ maxWidth: 1200, margin: '0 auto', position: 'relative' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 20 }}>
-            {/* Logo grande */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
-              <SFLogo size={64} />
-              <div>
-                <h1 style={{
-                  fontFamily: 'var(--font-display)', fontWeight: 900, fontStyle: 'italic',
-                  fontSize: 'clamp(42px, 8vw, 80px)', color: '#fff',
-                  letterSpacing: '-0.04em', lineHeight: 0.9, textTransform: 'uppercase',
+        <div style={{ maxWidth: 1120, margin: '0 auto', position: 'relative' }}>
+          <div className="apple-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 28 }}>
+            <p className="apple-eyebrow" style={{ marginBottom: -8 }}>
+              Marketplace · Argentina
+            </p>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 'clamp(12px, 3vw, 28px)' }}>
+              <BrandMark size="xl" />
+              <h1
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  fontSize: 'clamp(40px, 7.5vw, 76px)',
+                  color: 'var(--text-secondary)',
+                  letterSpacing: '-0.035em',
+                  lineHeight: 1.02,
                   margin: 0,
-                }}>
-                  SF_<span style={{ color: '#8A8A8A' }}>Usados</span>
-                </h1>
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: '#444', marginTop: 8 }}>
-                  Autos usados · Santa Fe, Argentina
-                </p>
-              </div>
+                }}
+              >
+                _Usados
+              </h1>
             </div>
 
-            {/* White accent line */}
-            <div style={{ height: 3, width: 100, background: '#fff', borderRadius: 2 }} />
+            <p
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'clamp(17px, 2.2vw, 21px)',
+                fontWeight: 400,
+                color: 'var(--text-tertiary)',
+                maxWidth: 520,
+                lineHeight: 1.5,
+                letterSpacing: '-0.015em',
+              }}
+            >
+              Elegí tu próximo auto con información clara y contacto directo por WhatsApp.
+            </p>
 
-            {/* Stats */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-body)', fontSize: 13, color: '#555' }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
-                {listings.length} autos publicados
-              </span>
-              <span style={{ color: '#222' }}>·</span>
-              <span style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: '#555' }}>WhatsApp directo</span>
-              <span style={{ color: '#222' }}>·</span>
-              <a href="https://www.instagram.com/sf_usados" target="_blank" rel="noopener noreferrer"
-                style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: '#666', textDecoration: 'none' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+              <div className="apple-chip">
+                <span className="apple-chip-dot" aria-hidden />
+                {listings.length} en stock
+              </div>
+              <div className="apple-chip">WhatsApp directo</div>
+              <a
+                href="https://www.instagram.com/sf_usados"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="apple-chip"
+                style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
+              >
                 @sf_usados
               </a>
             </div>
@@ -94,28 +104,41 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
         </div>
       </section>
 
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 20px 80px' }}>
+      <div style={{ maxWidth: 1120, margin: '0 auto', padding: 'clamp(32px, 5vw, 48px) max(20px, env(safe-area-inset-left)) 100px max(20px, env(safe-area-inset-right))' }}>
         <Suspense fallback={null}>
-          <div style={{ marginBottom: 28 }}>
+          <div style={{ marginBottom: 36 }}>
             <Filters />
           </div>
         </Suspense>
 
         {listings.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '100px 20px' }}>
-            <div style={{ fontSize: 64, marginBottom: 16 }}>🚗</div>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontStyle: 'italic', fontSize: 28, color: '#fff', marginBottom: 8 }}>Sin resultados</h3>
-            <p style={{ fontFamily: 'var(--font-body)', color: '#555' }}>Intentá con otros filtros o volvé pronto.</p>
+          <div style={{ textAlign: 'center', padding: 'min(120px, 18vw) 20px' }}>
+            <div style={{ fontSize: 56, marginBottom: 20, opacity: 0.35 }} aria-hidden>🚗</div>
+            <h3
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 600,
+                fontSize: 'clamp(24px, 4vw, 32px)',
+                color: 'var(--text)',
+                marginBottom: 12,
+                letterSpacing: '-0.02em',
+              }}
+            >
+              Sin resultados
+            </h3>
+            <p style={{ fontFamily: 'var(--font-body)', color: 'var(--text-tertiary)', fontSize: 17, maxWidth: 360, margin: '0 auto', lineHeight: 1.5 }}>
+              Probá otros filtros o volvé en otro momento.
+            </p>
           </div>
         ) : (
           <>
             {featured.length > 0 && (
-              <div style={{ marginBottom: 40 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: '#555', letterSpacing: '0.12em', textTransform: 'uppercase' }}>★ Destacados</span>
-                  <div style={{ flex: 1, height: 1, background: '#1a1a1a' }} />
+              <div style={{ marginBottom: 48 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 22 }}>
+                  <span className="apple-section-label">Destacados</span>
+                  <div className="apple-divider-fade" />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: 20 }}>
                   {featured.map((l, i) => <CarCard key={l.id} listing={l} index={i} />)}
                 </div>
               </div>
@@ -123,12 +146,12 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
             {regular.length > 0 && (
               <div>
                 {featured.length > 0 && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                    <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 11, color: '#333', letterSpacing: '0.12em', textTransform: 'uppercase' }}>Todos los autos</span>
-                    <div style={{ flex: 1, height: 1, background: '#1a1a1a' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 22 }}>
+                    <span className="apple-section-label">Catálogo</span>
+                    <div className="apple-divider-fade" />
                   </div>
                 )}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: 20 }}>
                   {regular.map((l, i) => <CarCard key={l.id} listing={l} index={i} />)}
                 </div>
               </div>
@@ -137,18 +160,39 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
         )}
       </div>
 
-      {/* Footer */}
-      <footer style={{ borderTop: '1px solid #141414', padding: '40px 20px', textAlign: 'center' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-          <SFLogo size={28} />
+      <footer
+        style={{
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          padding: '48px max(20px, env(safe-area-inset-left)) 56px max(20px, env(safe-area-inset-right))',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          <BrandMark size="sm" />
+          <span
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 500,
+              fontSize: 17,
+              color: 'var(--text-secondary)',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            _Usados
+          </span>
         </div>
-        <p style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontStyle: 'italic', fontSize: 16, color: '#fff', marginBottom: 6, letterSpacing: '-0.02em' }}>
-          SF_Usados
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 8, fontWeight: 500 }}>
+          Santa Fe, Argentina
         </p>
-        <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: '#383838' }}>
-          © {new Date().getFullYear()} · Santa Fe, Argentina ·{' '}
-          <a href="https://www.instagram.com/sf_usados" target="_blank" rel="noopener noreferrer" style={{ color: '#444', textDecoration: 'none' }}>
-            @sf_usados
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-tertiary)', opacity: 0.85 }}>
+          © {new Date().getFullYear()} ·{' '}
+          <a
+            href="https://www.instagram.com/sf_usados"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
+          >
+            Instagram
           </a>
         </p>
       </footer>

@@ -23,58 +23,139 @@ export default function Filters() {
   const hasFilters = brand || province || maxPrice || yearFrom || fuel
 
   return (
-    <div style={{
-      background: '#141414',
-      border: '1px solid #222',
-      borderRadius: 14,
-      padding: '16px 20px',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14, color: '#888', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          Filtros
+    <div className="apple-glass" style={{ padding: '22px 24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+        <span className="apple-section-label" style={{ marginBottom: 0 }}>
+          Refinar búsqueda
         </span>
         {hasFilters && (
-          <button onClick={() => router.push('/')}
-            style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: '#888', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
-            Limpiar
+          <button
+            type="button"
+            onClick={() => router.push('/')}
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 13,
+              fontWeight: 500,
+              color: 'var(--text-secondary)',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '6px 10px',
+              borderRadius: 'var(--radius-pill)',
+              transition: 'background 0.2s ease',
+            }}
+            className="filters-clear-btn"
+          >
+            Restablecer
           </button>
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
         <div>
-          <label style={{ display: 'block', fontFamily: 'var(--font-body)', fontSize: 11, color: '#555', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Marca</label>
-          <select value={brand} onChange={e => update('brand', e.target.value)} className="input-field" style={{ fontSize: 13 }}>
+          <label
+            style={{
+              display: 'block',
+              fontFamily: 'var(--font-body)',
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'var(--text-tertiary)',
+              marginBottom: 8,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Marca
+          </label>
+          <select value={brand} onChange={e => update('brand', e.target.value)} className="input-field" style={{ fontSize: 14 }}>
             <option value="">Todas</option>
             {CAR_BRANDS.map(b => <option key={b} value={b}>{b}</option>)}
           </select>
         </div>
 
         <div>
-          <label style={{ display: 'block', fontFamily: 'var(--font-body)', fontSize: 11, color: '#555', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Año desde</label>
-          <select value={yearFrom} onChange={e => update('yearFrom', e.target.value)} className="input-field" style={{ fontSize: 13 }}>
+          <label
+            style={{
+              display: 'block',
+              fontFamily: 'var(--font-body)',
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'var(--text-tertiary)',
+              marginBottom: 8,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Año desde
+          </label>
+          <select value={yearFrom} onChange={e => update('yearFrom', e.target.value)} className="input-field" style={{ fontSize: 14 }}>
             <option value="">Todos</option>
             {YEAR_OPTIONS.slice(0, 30).map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
 
         <div>
-          <label style={{ display: 'block', fontFamily: 'var(--font-body)', fontSize: 11, color: '#555', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Combustible</label>
-          <select value={fuel} onChange={e => update('fuel', e.target.value)} className="input-field" style={{ fontSize: 13 }}>
+          <label
+            style={{
+              display: 'block',
+              fontFamily: 'var(--font-body)',
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'var(--text-tertiary)',
+              marginBottom: 8,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Combustible
+          </label>
+          <select value={fuel} onChange={e => update('fuel', e.target.value)} className="input-field" style={{ fontSize: 14 }}>
             <option value="">Todos</option>
             {FUEL_TYPES.map(f => <option key={f} value={f}>{f}</option>)}
           </select>
         </div>
 
         <div>
-          <label style={{ display: 'block', fontFamily: 'var(--font-body)', fontSize: 11, color: '#555', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Precio máx (US$)</label>
-          <input type="number" placeholder="ej: 15000" value={maxPrice}
-            onChange={e => update('maxPrice', e.target.value)} className="input-field" style={{ fontSize: 13 }} />
+          <label
+            style={{
+              display: 'block',
+              fontFamily: 'var(--font-body)',
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'var(--text-tertiary)',
+              marginBottom: 8,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Precio máx. (US$)
+          </label>
+          <input
+            type="number"
+            placeholder="Ej. 15000"
+            value={maxPrice}
+            onChange={e => update('maxPrice', e.target.value)}
+            className="input-field"
+            style={{ fontSize: 14 }}
+          />
         </div>
 
         <div>
-          <label style={{ display: 'block', fontFamily: 'var(--font-body)', fontSize: 11, color: '#555', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Provincia</label>
-          <select value={province} onChange={e => update('province', e.target.value)} className="input-field" style={{ fontSize: 13 }}>
+          <label
+            style={{
+              display: 'block',
+              fontFamily: 'var(--font-body)',
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'var(--text-tertiary)',
+              marginBottom: 8,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Provincia
+          </label>
+          <select value={province} onChange={e => update('province', e.target.value)} className="input-field" style={{ fontSize: 14 }}>
             <option value="">Todas</option>
             {ARGENTINA_PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
