@@ -4,6 +4,9 @@ import { createServerClient } from '@/lib/supabase'
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const supabase = createServerClient()
+  if (!supabase) {
+    return NextResponse.json({ error: 'Supabase env vars are missing' }, { status: 500 })
+  }
 
   let q = supabase.from('listings').select('*').eq('is_active', true)
     .order('is_featured', { ascending: false })

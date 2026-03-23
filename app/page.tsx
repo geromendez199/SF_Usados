@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseClient } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
 import SFLogo from '@/components/SFLogo'
 import CarCard from '@/components/CarCard'
@@ -9,6 +9,9 @@ import type { Listing } from '@/types'
 interface SP { brand?: string; province?: string; maxPrice?: string; yearFrom?: string; fuel?: string }
 
 async function getListings(sp: SP): Promise<Listing[]> {
+  const supabase = getSupabaseClient()
+  if (!supabase) return []
+
   let q = supabase.from('listings').select('*')
     .eq('is_active', true)
     .order('is_featured', { ascending: false })

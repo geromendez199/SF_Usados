@@ -1,9 +1,12 @@
 import { notFound } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseClient } from '@/lib/supabase'
 import type { Listing } from '@/types'
 import CarDetail from './CarDetail'
 
 async function getListing(id: string): Promise<Listing | null> {
+  const supabase = getSupabaseClient()
+  if (!supabase) return null
+
   const { data, error } = await supabase
     .from('listings')
     .select('*')
@@ -18,7 +21,10 @@ export default async function ListingPage({ params }: { params: { id: string } }
   const listing = await getListing(params.id)
   if (!listing) notFound()
 
-  supabase.from('listings').update({ views: (listing.views || 0) + 1 }).eq('id', listing.id).then()
+  const supabase = getSupabaseClient()
+  if (supabase) {
+    supabase.from('listings').update({ views: (listing.views || 0) + 1 }).eq('id', listing.id).then()
+  }
 
   return <CarDetail listing={listing} />
 }

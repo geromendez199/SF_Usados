@@ -1,13 +1,12 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseClient } from '@/lib/supabase'
 import type { Listing } from '@/types'
-import { formatPrice, formatKm, timeAgo } from '@/lib/utils'
+import { formatPrice, formatKm } from '@/lib/utils'
 import { CAR_BRANDS, FUEL_TYPES, TRANSMISSION_TYPES, ARGENTINA_PROVINCES, YEAR_OPTIONS } from '@/types'
 import SFLogo from '@/components/SFLogo'
 
-const ADMIN_KEY = 'sf_admin_authed'
 const WA_NUMBER = '5493492273442'
 
 const labelStyle: React.CSSProperties = {
@@ -18,6 +17,7 @@ const labelStyle: React.CSSProperties = {
 const inputStyle = { fontSize: 13, color: '#f5f5f5' }
 
 function PublishForm({ onSuccess }: { onSuccess: () => void }) {
+  const supabase = getSupabaseClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -41,7 +41,14 @@ function PublishForm({ onSuccess }: { onSuccess: () => void }) {
     setPreviews(p => [...p, ...newFiles.map(f => URL.createObjectURL(f))])
   }
 
+  useEffect(() => {
+    return () => {
+      previews.forEach(url => URL.revokeObjectURL(url))
+    }
+  }, [previews])
+
   const uploadImages = async (): Promise<string[]> => {
+    if (!supabase) throw new Error('Faltan variables de entorno de Supabase')
     const urls: string[] = []
     for (const file of images) {
       const ext = file.name.split('.').pop()
@@ -55,6 +62,11 @@ function PublishForm({ onSuccess }: { onSuccess: () => void }) {
   }
 
   const handleSubmit = async () => {
+    if (!supabase) {
+      setError('Faltan variables de entorno de Supabase')
+      return
+    }
+
     if (!form.brand || !form.model || !form.year || !form.km || !form.price) {
       setError('Completá marca, modelo, año, km y precio'); return
     }
@@ -80,8 +92,8 @@ function PublishForm({ onSuccess }: { onSuccess: () => void }) {
       setForm(p => ({ ...p, brand: '', model: '', version: '', km: '', price: '', color: '', engine: '', description: '', is_featured: false }))
       setImages([]); setPreviews([])
       onSuccess()
-    } catch (e: any) {
-      setError(e.message || 'Error al publicar')
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Error al publicar')
     } finally { setLoading(false) }
   }
 
@@ -237,7 +249,9 @@ function PublishForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export default function AdminPage() {
+  const supabase = getSupabaseClient()
   const [authed, setAuthed] = useState(false)
+  const [checkingSession, setCheckingSession] = useState(true)
   const [password, setPassword] = useState('')
   const [pwError, setPwError] = useState('')
   const [tab, setTab] = useState<'listings' | 'publish'>('listings')
@@ -247,17 +261,48 @@ export default function AdminPage() {
   const [search, setSearch] = useState('')
   const [toast, setToast] = useState('')
 
-  useEffect(() => { if (sessionStorage.getItem(ADMIN_KEY) === '1') setAuthed(true) }, [])
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch('/api/admin/session', { cache: 'no-store' })
+        const json = await res.json()
+        setAuthed(Boolean(json?.ok))
+      } catch {
+        setAuthed(false)
+      } finally {
+        setCheckingSession(false)
+      }
+    }
+    checkSession()
+  }, [])
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3500) }
 
-  const login = () => {
-    if (password === 'sf2024' || password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
-      setAuthed(true); sessionStorage.setItem(ADMIN_KEY, '1')
-    } else { setPwError('Contraseña incorrecta') }
+  const login = async () => {
+    setPwError('')
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      })
+      if (!res.ok) {
+        setPwError('Contraseña incorrecta')
+        return
+      }
+      setAuthed(true)
+      setPassword('')
+    } catch {
+      setPwError('No se pudo iniciar sesión')
+    }
   }
 
   const fetchListings = useCallback(async () => {
+    if (!supabase) {
+      setListings([])
+      return
+    }
+
     setLoading(true)
     let q = supabase.from('listings').select('*').order('created_at', { ascending: false })
     if (filter === 'active') q = q.eq('is_active', true)
@@ -266,13 +311,20 @@ export default function AdminPage() {
     const { data } = await q.limit(200)
     setListings((data as Listing[]) || [])
     setLoading(false)
-  }, [filter])
+  }, [filter, supabase])
 
   useEffect(() => { if (authed) fetchListings() }, [authed, fetchListings])
 
-  const toggleActive = async (l: Listing) => { await supabase.from('listings').update({ is_active: !l.is_active }).eq('id', l.id); fetchListings() }
-  const toggleFeatured = async (l: Listing) => { await supabase.from('listings').update({ is_featured: !l.is_featured }).eq('id', l.id); fetchListings() }
+  const toggleActive = async (l: Listing) => {
+    if (!supabase) return
+    await supabase.from('listings').update({ is_active: !l.is_active }).eq('id', l.id); fetchListings()
+  }
+  const toggleFeatured = async (l: Listing) => {
+    if (!supabase) return
+    await supabase.from('listings').update({ is_featured: !l.is_featured }).eq('id', l.id); fetchListings()
+  }
   const deleteListing = async (id: string) => {
+    if (!supabase) return
     if (!confirm('¿Eliminar este auto?')) return
     await supabase.from('listings').delete().eq('id', id); fetchListings()
   }
@@ -288,6 +340,14 @@ export default function AdminPage() {
     active: listings.filter(l => l.is_active).length,
     featured: listings.filter(l => l.is_featured).length,
     views: listings.reduce((a, l) => a + (l.views || 0), 0),
+  }
+
+  if (checkingSession) {
+    return (
+      <main style={{ minHeight: '100vh', background: '#0A0A0A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
+        Verificando sesión...
+      </main>
+    )
   }
 
   // ── LOGIN ──
@@ -333,8 +393,16 @@ export default function AdminPage() {
           </div>
           <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
             <a href="/" target="_blank" style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: '#444', textDecoration: 'none' }}>Ver sitio ↗</a>
-            <button onClick={() => { sessionStorage.removeItem(ADMIN_KEY); setAuthed(false) }}
-              className="btn-ghost" style={{ fontSize: 12, padding: '7px 14px' }}>Salir</button>
+            <button
+              onClick={async () => {
+                await fetch('/api/admin/logout', { method: 'POST' })
+                setAuthed(false)
+              }}
+              className="btn-ghost"
+              style={{ fontSize: 12, padding: '7px 14px' }}
+            >
+              Salir
+            </button>
           </div>
         </div>
       </div>

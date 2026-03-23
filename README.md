@@ -31,7 +31,8 @@ NEXT_PUBLIC_SUPABASE_URL=https://XXXX.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-NEXT_PUBLIC_ADMIN_PASSWORD=sf2024
+ADMIN_PASSWORD=poné-una-password-fuerte
+ADMIN_SESSION_SECRET=poné-un-secreto-largo-y-random
 ```
 
 ### 4. Dev local
@@ -43,14 +44,14 @@ npm run dev
 ### 5. Deploy en Vercel
 1. Push a GitHub
 2. Vercel → New Project → importar repo
-3. Agregar las 5 variables de entorno
+3. Agregar las variables de entorno
 4. Deploy 🚀
 
 ---
 
 ## 🔐 Admin
-Entrá en `/admin` — contraseña por defecto: `sf2024`  
-Cambiala agregando `NEXT_PUBLIC_ADMIN_PASSWORD` en Vercel.
+Entrá en `/admin`.  
+Configurá `ADMIN_PASSWORD` y `ADMIN_SESSION_SECRET` en Vercel para habilitar el login seguro con cookie HTTP-only.
 
 Desde el admin podés:
 - Publicar autos con hasta 8 fotos

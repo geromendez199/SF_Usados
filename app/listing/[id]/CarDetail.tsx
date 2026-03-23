@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
-import SFLogo from '@/components/SFLogo'
 import { formatPrice, formatKm, buildWhatsApp, timeAgo } from '@/lib/utils'
 import type { Listing } from '@/types'
 
@@ -12,7 +11,10 @@ const WA_NUMBER = '5493492273442'
 
 export default function CarDetail({ listing }: { listing: Listing }) {
   const [activeImg, setActiveImg] = useState(0)
+  const [isBackHovered, setIsBackHovered] = useState(false)
   const waLink = buildWhatsApp(WA_NUMBER, listing)
+  const imageCount = listing.images?.length ?? 0
+  const safeActiveImg = imageCount > 0 ? Math.min(activeImg, imageCount - 1) : 0
 
   const specs = [
     { label: 'Marca', value: listing.brand },
@@ -34,9 +36,22 @@ export default function CarDetail({ listing }: { listing: Listing }) {
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '28px 20px 80px' }}>
 
         {/* Back */}
-        <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-body)', fontSize: 13, color: '#555', textDecoration: 'none', marginBottom: 24, transition: 'color 0.2s' }}
-          onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
-          onMouseLeave={e => (e.currentTarget.style.color = '#555')}>
+        <Link
+          href="/"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            fontFamily: 'var(--font-body)',
+            fontSize: 13,
+            color: isBackHovered ? '#fff' : '#555',
+            textDecoration: 'none',
+            marginBottom: 24,
+            transition: 'color 0.2s',
+          }}
+          onMouseEnter={() => setIsBackHovered(true)}
+          onMouseLeave={() => setIsBackHovered(false)}
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
@@ -49,7 +64,7 @@ export default function CarDetail({ listing }: { listing: Listing }) {
           <div>
             <div style={{ position: 'relative', paddingBottom: '54%', background: '#111', borderRadius: 14, overflow: 'hidden', border: '1px solid #1e1e1e', marginBottom: 8 }}>
               {listing.images?.length > 0 ? (
-                <Image src={listing.images[activeImg]} alt={listing.title} fill className="object-cover" priority />
+                <Image src={listing.images[safeActiveImg]} alt={listing.title} fill className="object-cover" priority />
               ) : (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#222" strokeWidth="1">
@@ -68,12 +83,18 @@ export default function CarDetail({ listing }: { listing: Listing }) {
             {listing.images?.length > 1 && (
               <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 4 }}>
                 {listing.images.map((img, i) => (
-                  <button key={i} onClick={() => setActiveImg(i)} style={{
-                    flexShrink: 0, width: 76, height: 54, position: 'relative',
-                    borderRadius: 8, overflow: 'hidden', padding: 0, background: 'none',
-                    border: `2px solid ${activeImg === i ? '#fff' : '#222'}`,
-                    cursor: 'pointer', transition: 'border-color 0.15s',
-                  }}>
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setActiveImg(i)}
+                    aria-label={`Ver imagen ${i + 1} de ${listing.images.length}`}
+                    style={{
+                      flexShrink: 0, width: 76, height: 54, position: 'relative',
+                      borderRadius: 8, overflow: 'hidden', padding: 0, background: 'none',
+                      border: `2px solid ${safeActiveImg === i ? '#fff' : '#222'}`,
+                      cursor: 'pointer', transition: 'border-color 0.15s',
+                    }}
+                  >
                     <Image src={img} alt="" fill className="object-cover" />
                   </button>
                 ))}
