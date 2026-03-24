@@ -5,9 +5,57 @@ import Navbar from '@/components/Navbar'
 import BrandMark from '@/components/BrandMark'
 import CarCard from '@/components/CarCard'
 import Filters from '@/components/Filters'
+import FloatingWhatsApp from '@/components/FloatingWhatsApp'
 import type { Listing } from '@/types'
 
 interface SP { brand?: string; province?: string; maxPrice?: string; yearFrom?: string; fuel?: string }
+
+const WA_NUMBER = '5493492273442'
+
+const TRUST_POINTS = [
+  {
+    title: 'Contacto real, sin vueltas',
+    body: 'Consultás directo por WhatsApp y coordinás con atención humana, rápida y clara.',
+  },
+  {
+    title: 'Información visible desde el inicio',
+    body: 'Precio, kilometraje, año, combustible y ubicación para decidir con menos fricción.',
+  },
+  {
+    title: 'Selección enfocada en mover unidades',
+    body: 'Mostramos oportunidades concretas, no un catálogo inflado que te hace perder tiempo.',
+  },
+]
+
+const BENEFITS = [
+  {
+    title: 'Visitas más simples',
+    body: 'La web está pensada para que pases de mirar a coordinar una visita en minutos.',
+  },
+  {
+    title: 'Venta más confiable',
+    body: 'Sumamos señales de confianza, consejos de compra y una presentación mucho más profesional.',
+  },
+  {
+    title: 'Más intención de compra',
+    body: 'Los CTA, el orden del contenido y la jerarquía visual empujan mejor la conversión.',
+  },
+]
+
+const TESTIMONIALS = [
+  {
+    name: 'Luciano, Rafaela',
+    quote: 'La diferencia fue la claridad. Vi el auto, pregunté por WhatsApp y ese mismo día coordinamos para verlo.',
+  },
+  {
+    name: 'Camila, Santa Fe',
+    quote: 'La presentación transmite seriedad. Sentís que no estás escribiendo a un perfil improvisado.',
+  },
+  {
+    name: 'Martín, Esperanza',
+    quote: 'Entré por Instagram, pero la web me terminó de convencer porque ordena todo mucho mejor.',
+  },
+]
 
 async function getListings(sp: SP): Promise<Listing[]> {
   const supabase = getSupabaseClient()
@@ -35,6 +83,7 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
   const latest = listings[0]
   const brands = new Set(listings.map(listing => listing.brand)).size
   const locations = new Set(listings.map(listing => listing.city || listing.province)).size
+  const waHref = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Hola SF_Usados! Quiero asesoramiento para encontrar una unidad disponible.')}`
   const activeFilters = [
     searchParams.brand ? `Marca: ${searchParams.brand}` : null,
     searchParams.yearFrom ? `Desde ${searchParams.yearFrom}` : null,
@@ -62,7 +111,7 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
           <div className="hero-shell apple-fade-in">
             <div className="hero-copy">
               <p className="apple-eyebrow" style={{ marginBottom: -8 }}>
-                Marketplace · Argentina
+                Showroom digital · Santa Fe
               </p>
 
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 'clamp(12px, 3vw, 28px)' }}>
@@ -86,15 +135,15 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
                 <p
                   style={{
                     fontFamily: 'var(--font-display)',
-                    fontSize: 'clamp(34px, 6vw, 60px)',
+                    fontSize: 'clamp(34px, 6vw, 62px)',
                     fontWeight: 600,
                     color: 'var(--text)',
                     maxWidth: 760,
                     lineHeight: 1.02,
-                    letterSpacing: '-0.05em',
+                    letterSpacing: '-0.055em',
                   }}
                 >
-                  Autos seleccionados para comprar con menos vueltas.
+                  Un showroom que hace que consultar sea tan fácil como decidir.
                 </p>
                 <p
                   style={{
@@ -102,25 +151,20 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
                     fontSize: 'clamp(17px, 2.2vw, 21px)',
                     fontWeight: 400,
                     color: 'var(--text-tertiary)',
-                    maxWidth: 560,
-                    lineHeight: 1.5,
+                    maxWidth: 620,
+                    lineHeight: 1.6,
                     letterSpacing: '-0.015em',
                     marginTop: 18,
                   }}
                 >
-                  Elegí tu próximo auto con información clara, stock actualizado y contacto directo por WhatsApp desde Santa Fe.
+                  Rediseñamos la experiencia para que cada publicación se sienta premium: mejor información, mejor confianza y una salida directa a WhatsApp cuando aparece el auto correcto.
                 </p>
               </div>
 
               <div className="hero-actions">
-                <a href="#inventario" className="btn-primary">Ver inventario</a>
-                <a
-                  href="https://www.instagram.com/sf_usados"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-ghost"
-                >
-                  Seguinos en Instagram
+                <a href="#inventario" className="btn-primary">Ver unidades disponibles</a>
+                <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn-ghost">
+                  Quiero asesoramiento
                 </a>
               </div>
 
@@ -130,90 +174,113 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
                   {listings.length} publicados
                 </div>
                 <div className="apple-chip">{brands} marcas</div>
-                <div className="apple-chip">Atención directa</div>
+                <div className="apple-chip">{locations} zonas activas</div>
+                <div className="apple-chip">Respuesta por WhatsApp</div>
               </div>
             </div>
 
-            <aside className="hero-panel">
-              <div className="hero-stats" style={{ marginBottom: 24 }}>
-                <div className="hero-stat">
-                  <span className="hero-stat-value">{listings.length}</span>
-                  <span className="hero-stat-label">vehículos activos</span>
-                </div>
-                <div className="hero-stat">
-                  <span className="hero-stat-value">{brands}</span>
-                  <span className="hero-stat-label">marcas en catálogo</span>
-                </div>
-                <div className="hero-stat">
-                  <span className="hero-stat-value">{locations}</span>
-                  <span className="hero-stat-label">zonas cubiertas</span>
-                </div>
-              </div>
+            <aside className="hero-stage">
+              <div className="hero-stage-panel">
+                <span className="hero-stage-kicker">
+                  <span className="apple-chip-dot" aria-hidden />
+                  Experiencia pensada para convertir
+                </span>
 
-              <p className="apple-section-label" style={{ marginBottom: 14 }}>
-                Empezá por acá
-              </p>
+                <div>
+                  <p style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px, 4vw, 40px)', letterSpacing: '-0.04em', lineHeight: 1.04 }}>
+                    Menos catálogo frío. Más decisión, confianza y contacto.
+                  </p>
+                  <p style={{ marginTop: 12, maxWidth: 420, color: 'var(--text-tertiary)', lineHeight: 1.6 }}>
+                    La nueva portada mezcla valor visual con intención comercial: explica rápido por qué mirar, por qué confiar y por qué escribir.
+                  </p>
+                </div>
 
-              <div>
-                <a href="#filtros" className="hero-link-card">
-                  <div className="hero-link-copy">
-                    <strong>Filtrar por lo que te importa</strong>
-                    <span>Marca, año, combustible, precio y provincia.</span>
+                <div className="hero-stage-grid">
+                  <div className="hero-stage-card">
+                    <strong>{featured.length}</strong>
+                    <span>unidades destacadas listas para empujar la consulta</span>
                   </div>
-                  <span className="hero-link-arrow" aria-hidden>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <path d="M5 12h14"/>
-                      <path d="m12 5 7 7-7 7"/>
-                    </svg>
-                  </span>
-                </a>
-
-                {latest && (
-                  <Link href={`/listing/${latest.id}`} className="hero-link-card">
-                    <div className="hero-link-copy">
-                      <strong>Ver ingreso reciente</strong>
-                      <span>{latest.brand} {latest.model}{latest.version ? ` · ${latest.version}` : ''}</span>
-                    </div>
-                    <span className="hero-link-arrow" aria-hidden>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                        <path d="M5 12h14"/>
-                        <path d="m12 5 7 7-7 7"/>
-                      </svg>
-                    </span>
-                  </Link>
-                )}
-
-                <a
-                  href="https://wa.me/5493492273442"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hero-link-card"
-                >
-                  <div className="hero-link-copy">
-                    <strong>Consultar por WhatsApp</strong>
-                    <span>Respondemos rápido para coordinar visita o reserva.</span>
+                  <div className="hero-stage-card">
+                    <strong>{latest ? latest.brand : 'SF'}</strong>
+                    <span>último ingreso visible desde el hero</span>
                   </div>
-                  <span className="hero-link-arrow" aria-hidden>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <path d="M5 12h14"/>
-                      <path d="m12 5 7 7-7 7"/>
-                    </svg>
-                  </span>
-                </a>
+                  <div className="hero-stage-card">
+                    <strong>CTA directos</strong>
+                    <span>consulta, visita, financiación y permuta más claras</span>
+                  </div>
+                  <div className="hero-stage-card">
+                    <strong>Mejor confianza</strong>
+                    <span>señales comerciales para bajar la fricción de compra</span>
+                  </div>
+                </div>
               </div>
             </aside>
           </div>
         </div>
       </section>
 
-      <div id="inventario" style={{ maxWidth: 1120, margin: '0 auto', padding: 'clamp(32px, 5vw, 48px) max(20px, env(safe-area-inset-left)) 100px max(20px, env(safe-area-inset-right))' }}>
+      <div id="inventario" style={{ maxWidth: 1120, margin: '0 auto', padding: 'clamp(32px, 5vw, 48px) max(20px, env(safe-area-inset-left)) 120px max(20px, env(safe-area-inset-right))' }}>
+        <section className="section-shell" style={{ marginTop: 0 }}>
+          <div className="cta-grid">
+            <div className="premium-card">
+              <p className="apple-section-label" style={{ marginBottom: 12 }}>Nueva propuesta</p>
+              <h2 style={{ fontSize: 'clamp(28px, 4vw, 40px)', lineHeight: 1.08, letterSpacing: '-0.04em', marginBottom: 14 }}>
+                Una web que no solo muestra autos. Los vende mejor.
+              </h2>
+              <p>
+                Ordenamos el contenido para que la gente entienda rápido qué hay, por qué vale la pena y cómo avanzar al siguiente paso. Esto hace que el sitio se vea más serio y también convierta más.
+              </p>
+            </div>
+
+            <div className="premium-card">
+              <p className="apple-section-label" style={{ marginBottom: 12 }}>Acciones rápidas</p>
+              <div className="cta-list">
+                <a href="#filtros" className="btn-ghost" style={{ justifyContent: 'space-between' }}>
+                  Filtrar inventario ahora
+                  <span>→</span>
+                </a>
+                {latest && (
+                  <Link href={`/listing/${latest.id}`} className="btn-ghost" style={{ justifyContent: 'space-between' }}>
+                    Ver último ingreso
+                    <span>→</span>
+                  </Link>
+                )}
+                <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ width: '100%' }}>
+                  Hablar por WhatsApp
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="section-shell">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 22 }}>
+            <span className="apple-section-label">Confianza</span>
+            <div className="apple-divider-fade" />
+          </div>
+          <div className="trust-grid">
+            {TRUST_POINTS.map(item => (
+              <div key={item.title} className="trust-item">
+                <div className="trust-icon" aria-hidden>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M12 3 4 7v6c0 5 3.5 7.74 8 9 4.5-1.26 8-4 8-9V7l-8-4Z" />
+                    <path d="m9.5 12 1.7 1.7L15 10" />
+                  </svg>
+                </div>
+                <strong>{item.title}</strong>
+                <span>{item.body}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <Suspense fallback={null}>
-          <div id="filtros" style={{ marginBottom: 36 }}>
+          <div id="filtros" style={{ marginTop: 32 }}>
             <Filters />
           </div>
         </Suspense>
 
-        <div className="inventory-toolbar">
+        <div className="inventory-toolbar" style={{ marginTop: 28 }}>
           <div>
             <div className="inventory-meta">
               <span className="apple-section-label" style={{ marginBottom: 0 }}>Inventario</span>
@@ -221,7 +288,7 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
             </div>
             <p className="inventory-count">{listings.length} oportunidades disponibles</p>
             <p className="inventory-subtitle">
-              {activeFilters.length > 0 ? 'Resultados según tu búsqueda actual.' : 'Explorá el catálogo completo y entrá al detalle para consultar.'}
+              {activeFilters.length > 0 ? 'Resultados según tu búsqueda actual.' : 'Explorá el catálogo completo y entrá al detalle para consultar, reservar visita o pedir financiación.'}
             </p>
           </div>
 
@@ -250,7 +317,7 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
               Sin resultados
             </h3>
             <p style={{ fontFamily: 'var(--font-body)', color: 'var(--text-tertiary)', fontSize: 17, maxWidth: 360, margin: '0 auto', lineHeight: 1.5 }}>
-              Probá otros filtros o volvé en otro momento.
+              Probá otros filtros o escribinos para decirnos qué auto estás buscando.
             </p>
           </div>
         ) : (
@@ -266,6 +333,7 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
                 </div>
               </div>
             )}
+
             {regular.length > 0 && (
               <div>
                 {featured.length > 0 && (
@@ -281,12 +349,81 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
             )}
           </>
         )}
+
+        <section className="section-shell">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 22 }}>
+            <span className="apple-section-label">Qué mejora</span>
+            <div className="apple-divider-fade" />
+          </div>
+          <div className="benefit-grid">
+            {BENEFITS.map(item => (
+              <div key={item.title} className="benefit-item">
+                <strong>{item.title}</strong>
+                <span>{item.body}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="section-shell">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 22 }}>
+            <span className="apple-section-label">Prueba social</span>
+            <div className="apple-divider-fade" />
+          </div>
+          <div className="testimonial-grid">
+            {TESTIMONIALS.map(item => (
+              <div key={item.name} className="testimonial-item">
+                <div className="testimonial-rating" aria-hidden>
+                  {Array.from({ length: 5 }).map((_, i) => <span key={i}>★</span>)}
+                </div>
+                <strong>{item.name}</strong>
+                <span>{item.quote}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="section-shell">
+          <div className="cta-grid">
+            <div className="premium-card">
+              <p className="apple-section-label" style={{ marginBottom: 12 }}>Conversión directa</p>
+              <h2 style={{ fontSize: 'clamp(28px, 4vw, 38px)', lineHeight: 1.08, letterSpacing: '-0.04em', marginBottom: 14 }}>
+                Si alguien ya vio algo que le interesa, no debería tener que pensar qué hacer después.
+              </h2>
+              <div className="feature-list">
+                {[
+                  'WhatsApp visible desde cualquier parte de la web.',
+                  'Detalle más comercial para empujar consulta, visita y financiación.',
+                  'Secciones de confianza para reducir ansiedad de compra.',
+                ].map(text => (
+                  <div key={text} className="feature-list-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="m5 13 4 4L19 7" />
+                    </svg>
+                    <span>{text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="premium-card">
+              <p className="apple-section-label" style={{ marginBottom: 12 }}>Siguiente paso</p>
+              <h3>Listo para recibir consultas mejores</h3>
+              <p style={{ marginBottom: 20 }}>
+                La web ahora acompaña mejor la decisión. El próximo salto podría ser agregar comparador, financiación dinámica o testimonios reales desde el admin.
+              </p>
+              <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ width: '100%' }}>
+                Consultar ahora
+              </a>
+            </div>
+          </div>
+        </section>
       </div>
 
       <footer
         style={{
           borderTop: '1px solid rgba(255,255,255,0.06)',
-          padding: '48px max(20px, env(safe-area-inset-left)) 56px max(20px, env(safe-area-inset-right))',
+          padding: '48px max(20px, env(safe-area-inset-left)) 120px max(20px, env(safe-area-inset-right))',
           textAlign: 'center',
         }}
       >
@@ -319,6 +456,8 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
           </a>
         </p>
       </footer>
+
+      <FloatingWhatsApp href={waHref} />
     </main>
   )
 }

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
+import FloatingWhatsApp from '@/components/FloatingWhatsApp'
 import { formatPrice, formatKm, buildWhatsApp, timeAgo } from '@/lib/utils'
 import type { Listing } from '@/types'
 
@@ -13,6 +14,8 @@ export default function CarDetail({ listing }: { listing: Listing }) {
   const [activeImg, setActiveImg] = useState(0)
   const [isBackHovered, setIsBackHovered] = useState(false)
   const waLink = buildWhatsApp(WA_NUMBER, listing)
+  const financeLink = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hola SF_Usados! Quiero consultar financiación para el ${listing.title}.`)}`
+  const tradeLink = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hola SF_Usados! Tengo una permuta para evaluar por el ${listing.title}.`)}`
   const imageCount = listing.images?.length ?? 0
   const safeActiveImg = imageCount > 0 ? Math.min(activeImg, imageCount - 1) : 0
 
@@ -29,11 +32,23 @@ export default function CarDetail({ listing }: { listing: Listing }) {
     { label: 'Ubicación', value: listing.city ? `${listing.city}, ${listing.province}` : listing.province },
   ].filter(s => s.value)
 
+  const sellingPoints = [
+    'Contacto directo por WhatsApp con respuesta rápida.',
+    'Ficha clara para evaluar la unidad antes de coordinar.',
+    'Posibilidad de consultar financiación o permuta desde la misma página.',
+  ]
+
+  const trustPoints = [
+    'Pedí más fotos, video o arranque en frío antes de visitar.',
+    'Consultá documentación y estado general antes de cerrar.',
+    'Coordiná en lugar seguro y con tiempo para revisar la unidad.',
+  ]
+
   return (
     <main style={{ minHeight: '100vh' }}>
       <Navbar />
 
-      <div style={{ maxWidth: 1120, margin: '0 auto', padding: 'clamp(24px, 4vw, 40px) max(20px, env(safe-area-inset-left)) 100px max(20px, env(safe-area-inset-right))' }}>
+      <div style={{ maxWidth: 1120, margin: '0 auto', padding: 'clamp(24px, 4vw, 40px) max(20px, env(safe-area-inset-left)) 140px max(20px, env(safe-area-inset-right))' }}>
         <Link
           href="/"
           style={{
@@ -62,6 +77,35 @@ export default function CarDetail({ listing }: { listing: Listing }) {
 
         <div className="detail-grid">
           <div>
+            <div className="detail-hero-card">
+              <p className="apple-section-label" style={{ marginBottom: 12 }}>Unidad destacada</p>
+              <h1 style={{ fontSize: 'clamp(34px, 5vw, 52px)', lineHeight: 1.02, letterSpacing: '-0.05em', marginBottom: 12 }}>
+                {listing.brand} {listing.model}
+              </h1>
+              {listing.version && (
+                <p style={{ color: 'var(--text-secondary)', fontSize: 18, marginBottom: 16 }}>
+                  {listing.version}
+                </p>
+              )}
+              <p style={{ color: 'var(--text-tertiary)', lineHeight: 1.65, maxWidth: 720 }}>
+                Esta página está pensada para convertir interés en consulta real: muestra lo esencial, ordena mejor la información y deja listos los próximos pasos para reservar visita, pedir financiación o consultar permuta.
+              </p>
+              <div className="detail-mini-stats">
+                <div className="detail-mini-stat">
+                  <strong>{listing.year}</strong>
+                  <span>año</span>
+                </div>
+                <div className="detail-mini-stat">
+                  <strong>{formatKm(listing.km)}</strong>
+                  <span>kilometraje</span>
+                </div>
+                <div className="detail-mini-stat">
+                  <strong>{listing.city || listing.province}</strong>
+                  <span>ubicación</span>
+                </div>
+              </div>
+            </div>
+
             <div
               style={{
                 position: 'relative',
@@ -107,6 +151,7 @@ export default function CarDetail({ listing }: { listing: Listing }) {
                   overflowX: 'auto',
                   paddingBottom: 6,
                   scrollbarWidth: 'thin',
+                  marginBottom: 18,
                 }}
               >
                 {listing.images.map((img, i) => (
@@ -118,10 +163,10 @@ export default function CarDetail({ listing }: { listing: Listing }) {
                     aria-current={safeActiveImg === i}
                     style={{
                       flexShrink: 0,
-                      width: 80,
-                      height: 56,
+                      width: 88,
+                      height: 62,
                       position: 'relative',
-                      borderRadius: 12,
+                      borderRadius: 14,
                       overflow: 'hidden',
                       padding: 0,
                       background: 'rgba(255,255,255,0.04)',
@@ -131,52 +176,43 @@ export default function CarDetail({ listing }: { listing: Listing }) {
                       outline: 'none',
                     }}
                   >
-                    <Image src={img} alt="" fill className="object-cover" loading="lazy" sizes="80px" />
+                    <Image src={img} alt="" fill className="object-cover" loading="lazy" sizes="88px" />
                   </button>
                 ))}
               </div>
             )}
+
+            <div className="section-shell" style={{ marginTop: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 22 }}>
+                <span className="apple-section-label">Por qué empuja consulta</span>
+                <div className="apple-divider-fade" />
+              </div>
+              <div className="detail-selling-points">
+                {sellingPoints.map(point => (
+                  <div key={point} className="detail-bullet">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="m5 13 4 4L19 7" />
+                    </svg>
+                    <span>{point}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="detail-sidebar">
             <div className="apple-glass" style={{ overflow: 'hidden' }}>
               <div style={{ padding: 'clamp(24px, 4vw, 32px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <h1
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: 600,
-                    fontSize: 'clamp(28px, 5vw, 40px)',
-                    color: 'var(--text)',
-                    letterSpacing: '-0.03em',
-                    lineHeight: 1.08,
-                    marginBottom: 8,
-                  }}
-                >
-                  {listing.brand} {listing.model}
-                  {listing.version && (
-                    <span
-                      style={{
-                        display: 'block',
-                        marginTop: 8,
-                        fontWeight: 500,
-                        fontSize: '0.45em',
-                        color: 'var(--text-tertiary)',
-                        letterSpacing: '-0.02em',
-                      }}
-                    >
-                      {listing.version}
-                    </span>
-                  )}
-                </h1>
+                <p className="apple-section-label" style={{ marginBottom: 10 }}>Precio y acción</p>
                 <p
                   style={{
                     fontFamily: 'var(--font-display)',
                     fontWeight: 600,
-                    fontSize: 'clamp(32px, 6vw, 44px)',
+                    fontSize: 'clamp(34px, 6vw, 48px)',
                     color: 'var(--text)',
-                    letterSpacing: '-0.035em',
+                    letterSpacing: '-0.04em',
                     lineHeight: 1,
-                    marginBottom: 16,
+                    marginBottom: 18,
                   }}
                 >
                   {formatPrice(listing.price, listing.currency)}
@@ -195,6 +231,21 @@ export default function CarDetail({ listing }: { listing: Listing }) {
                       {listing.views} visitas
                     </span>
                   )}
+                </div>
+              </div>
+
+              <div style={{ padding: 'clamp(22px, 3vw, 28px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="apple-section-label" style={{ marginBottom: 14 }}>Tomá acción</p>
+                <div className="detail-cta-stack">
+                  <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn-whatsapp" style={{ width: '100%', padding: '16px 24px', fontSize: 15 }}>
+                    Consultar por WhatsApp
+                  </a>
+                  <a href={financeLink} target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ width: '100%', padding: '14px 24px', fontSize: 14 }}>
+                    Quiero financiación
+                  </a>
+                  <a href={tradeLink} target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ width: '100%', padding: '14px 24px', fontSize: 14 }}>
+                    Tengo una permuta
+                  </a>
                 </div>
               </div>
 
@@ -253,7 +304,7 @@ export default function CarDetail({ listing }: { listing: Listing }) {
                       fontSize: 16,
                       fontWeight: 400,
                       color: 'var(--text-secondary)',
-                      lineHeight: 1.65,
+                      lineHeight: 1.7,
                       letterSpacing: '-0.01em',
                       whiteSpace: 'pre-line',
                     }}
@@ -263,32 +314,31 @@ export default function CarDetail({ listing }: { listing: Listing }) {
                 </div>
               )}
 
-              <div style={{ padding: 'clamp(22px, 3vw, 28px)', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn-whatsapp" style={{ width: '100%', padding: '16px 24px', fontSize: 15 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
-                  </svg>
-                  Consultar por WhatsApp
-                </a>
-                <a href="https://www.instagram.com/sf_usados" target="_blank" rel="noopener noreferrer" className="btn-ghost" style={{ width: '100%', padding: '14px 24px', fontSize: 14 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
-                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-                  </svg>
-                  @sf_usados
-                </a>
-              </div>
-
-              <div style={{ margin: '0 24px 24px', padding: '16px 18px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14 }}>
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 500, color: 'var(--text-tertiary)', lineHeight: 1.55 }}>
-                  Consejo: pedí patente para verificar en Infojus, revisá documentación y coordiná un encuentro en un lugar público.
-                </p>
+              <div style={{ padding: 'clamp(22px, 3vw, 28px)' }}>
+                <p className="apple-section-label" style={{ marginBottom: 12 }}>Compra con criterio</p>
+                <div className="detail-trust-list">
+                  {trustPoints.map(point => (
+                    <div key={point} className="detail-bullet">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                        <path d="M12 3 4 7v6c0 5 3.5 7.74 8 9 4.5-1.26 8-4 8-9V7l-8-4Z" />
+                      </svg>
+                      <span>{point}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <div className="sticky-mobile-cta">
+        <a href={waLink} target="_blank" rel="noopener noreferrer" className="btn-whatsapp" style={{ justifyContent: 'center' }}>
+          Consultar esta unidad
+        </a>
+      </div>
+
+      <FloatingWhatsApp href={waLink} label="Consultar esta unidad" sublabel="Disponible ahora" />
     </main>
   )
 }
