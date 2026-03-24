@@ -14,7 +14,7 @@ export default function CarCard({ listing, index = 0 }: { listing: Listing; inde
   return (
     <div className="car-card" style={{ animationDelay: `${index * 40}ms` }}>
       <Link href={`/listing/${listing.id}`} style={{ textDecoration: 'none', display: 'block' }}>
-        <div style={{ position: 'relative', paddingBottom: '62%', background: '#0a0a0a', overflow: 'hidden' }}>
+        <div className="card-media">
           {img ? (
             <Image
               src={img}
@@ -39,7 +39,7 @@ export default function CarCard({ listing, index = 0 }: { listing: Listing; inde
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.15) 45%, transparent 100%)',
+              background: 'linear-gradient(to top, rgba(0,0,0,0.86) 0%, rgba(0,0,0,0.24) 42%, transparent 100%)',
             }}
           />
 
@@ -98,9 +98,11 @@ export default function CarCard({ listing, index = 0 }: { listing: Listing; inde
               color: 'var(--text)',
               letterSpacing: '-0.025em',
               marginBottom: 4,
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              minHeight: 44,
             }}
           >
             {listing.brand} {listing.model}
@@ -137,7 +139,7 @@ export default function CarCard({ listing, index = 0 }: { listing: Listing; inde
               </svg>
               {listing.city || listing.province}
             </span>
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', opacity: 0.8 }}>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 500, color: 'var(--text-tertiary)', opacity: 0.8, whiteSpace: 'nowrap' }}>
               {timeAgo(listing.created_at)}
             </span>
           </div>

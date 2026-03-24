@@ -21,6 +21,13 @@ export default function Filters() {
   const yearFrom = searchParams.get('yearFrom') || ''
   const fuel = searchParams.get('fuel') || ''
   const hasFilters = brand || province || maxPrice || yearFrom || fuel
+  const activeFilters = [
+    brand ? { label: 'Marca', value: brand } : null,
+    yearFrom ? { label: 'Desde', value: yearFrom } : null,
+    fuel ? { label: 'Combustible', value: fuel } : null,
+    maxPrice ? { label: 'Hasta', value: `US$ ${Number(maxPrice).toLocaleString('es-AR')}` } : null,
+    province ? { label: 'Provincia', value: province } : null,
+  ].filter(Boolean) as { label: string; value: string }[]
 
   return (
     <div className="apple-glass" style={{ padding: '22px 24px' }}>
@@ -50,6 +57,10 @@ export default function Filters() {
           </button>
         )}
       </div>
+
+      <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-tertiary)', lineHeight: 1.5, marginBottom: 18 }}>
+        Encontrá usados listos para ver con filtros rápidos por marca, año, combustible, precio y ubicación.
+      </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
         <div>
@@ -161,6 +172,17 @@ export default function Filters() {
           </select>
         </div>
       </div>
+
+      {activeFilters.length > 0 && (
+        <div className="active-filters">
+          {activeFilters.map(filter => (
+            <span key={`${filter.label}-${filter.value}`} className="active-filter-pill">
+              {filter.label}
+              <strong>{filter.value}</strong>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
