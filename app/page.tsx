@@ -93,24 +93,6 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
               <p className="apple-eyebrow" style={{ marginBottom: -8 }}>
                 Showroom digital · Rafaela
               </p>
-
-              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 'clamp(12px, 3vw, 28px)' }}>
-                <BrandMark size="xl" />
-                <h1
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: 600,
-                    fontSize: 'clamp(40px, 7.5vw, 76px)',
-                    color: 'var(--text-secondary)',
-                    letterSpacing: '-0.035em',
-                    lineHeight: 1.02,
-                    margin: 0,
-                  }}
-                >
-                  _Usados
-                </h1>
-              </div>
-
               <div>
                 <p
                   style={{
