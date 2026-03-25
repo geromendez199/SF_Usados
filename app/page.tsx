@@ -8,7 +8,7 @@ import Filters from '@/components/Filters'
 import FloatingWhatsApp from '@/components/FloatingWhatsApp'
 import type { Listing } from '@/types'
 
-interface SP { brand?: string; province?: string; maxPrice?: string; yearFrom?: string; fuel?: string }
+interface SP { brand?: string; province?: string; maxPrice?: string; yearFrom?: string; fuel?: string; q?: string; sort?: string }
 
 const WA_NUMBER = '5493492273442'
 
@@ -70,6 +70,14 @@ async function getListings(sp: SP): Promise<Listing[]> {
   if (sp.maxPrice) q = q.lte('price', parseInt(sp.maxPrice))
   if (sp.yearFrom) q = q.gte('year', parseInt(sp.yearFrom))
   if (sp.fuel) q = q.eq('fuel', sp.fuel)
+  if (sp.q) {
+    const search = sp.q.replace(/[,%]/g, ' ').trim()
+    if (search) q = q.or(`brand.ilike.%${search}%,model.ilike.%${search}%,version.ilike.%${search}%,title.ilike.%${search}%`)
+  }
+  if (sp.sort === 'priceAsc') q = q.order('price', { ascending: true })
+  if (sp.sort === 'priceDesc') q = q.order('price', { ascending: false })
+  if (sp.sort === 'yearDesc') q = q.order('year', { ascending: false })
+  if (sp.sort === 'kmAsc') q = q.order('km', { ascending: true })
   const { data } = await q.limit(48)
   return (data as Listing[]) || []
 }
@@ -83,17 +91,35 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
   const latest = listings[0]
   const brands = new Set(listings.map(listing => listing.brand)).size
   const locations = new Set(listings.map(listing => listing.city || listing.province)).size
+  const sortedBy = searchParams.sort || 'newest'
   const waHref = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Hola SF_Usados! Quiero asesoramiento para encontrar una unidad disponible.')}`
   const activeFilters = [
+    searchParams.q ? `Buscar: ${searchParams.q}` : null,
     searchParams.brand ? `Marca: ${searchParams.brand}` : null,
     searchParams.yearFrom ? `Desde ${searchParams.yearFrom}` : null,
     searchParams.fuel ? `Combustible: ${searchParams.fuel}` : null,
     searchParams.maxPrice ? `Hasta US$ ${Number(searchParams.maxPrice).toLocaleString('es-AR')}` : null,
     searchParams.province ? `Provincia: ${searchParams.province}` : null,
+    sortedBy !== 'newest' ? `Ordenar: ${sortedBy}` : null,
   ].filter(Boolean) as string[]
+  const itemListSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'SF_Usados',
+    itemListElement: listings.slice(0, 12).map((listing, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: `https://sf-usados.vercel.app/listing/${listing.id}`,
+      name: listing.title,
+    })),
+  }
 
   return (
     <main style={{ minHeight: '100vh' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+      />
       <Navbar />
 
       <section
@@ -288,7 +314,7 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
             </div>
             <p className="inventory-count">{listings.length} oportunidades disponibles</p>
             <p className="inventory-subtitle">
-              {activeFilters.length > 0 ? 'Resultados según tu búsqueda actual.' : 'Explorá el catálogo completo y entrá al detalle para consultar, reservar visita o pedir financiación.'}
+              {activeFilters.length > 0 ? 'Resultados según tu búsqueda actual, con búsqueda y orden inteligente.' : 'Explorá el catálogo completo, buscá por modelo y ordená por precio, kilometraje o año.'}
             </p>
           </div>
 

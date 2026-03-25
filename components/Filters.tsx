@@ -4,6 +4,14 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback } from 'react'
 import { CAR_BRANDS, FUEL_TYPES, ARGENTINA_PROVINCES, YEAR_OPTIONS } from '@/types'
 
+const SORT_OPTIONS = [
+  { value: 'newest', label: 'Más recientes' },
+  { value: 'priceAsc', label: 'Menor precio' },
+  { value: 'priceDesc', label: 'Mayor precio' },
+  { value: 'yearDesc', label: 'Más nuevos' },
+  { value: 'kmAsc', label: 'Menor kilometraje' },
+]
+
 export default function Filters() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -15,18 +23,22 @@ export default function Filters() {
     router.push(`/?${params.toString()}`)
   }, [router, searchParams])
 
+  const q = searchParams.get('q') || ''
   const brand = searchParams.get('brand') || ''
   const province = searchParams.get('province') || ''
   const maxPrice = searchParams.get('maxPrice') || ''
   const yearFrom = searchParams.get('yearFrom') || ''
   const fuel = searchParams.get('fuel') || ''
-  const hasFilters = brand || province || maxPrice || yearFrom || fuel
+  const sort = searchParams.get('sort') || 'newest'
+  const hasFilters = q || brand || province || maxPrice || yearFrom || fuel || sort !== 'newest'
   const activeFilters = [
+    q ? { label: 'Buscar', value: q } : null,
     brand ? { label: 'Marca', value: brand } : null,
     yearFrom ? { label: 'Desde', value: yearFrom } : null,
     fuel ? { label: 'Combustible', value: fuel } : null,
     maxPrice ? { label: 'Hasta', value: `US$ ${Number(maxPrice).toLocaleString('es-AR')}` } : null,
     province ? { label: 'Provincia', value: province } : null,
+    sort !== 'newest' ? { label: 'Ordenar', value: SORT_OPTIONS.find(option => option.value === sort)?.label || sort } : null,
   ].filter(Boolean) as { label: string; value: string }[]
 
   return (
@@ -59,10 +71,55 @@ export default function Filters() {
       </div>
 
       <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--text-tertiary)', lineHeight: 1.5, marginBottom: 18 }}>
-        Encontrá usados listos para ver con filtros rápidos por marca, año, combustible, precio y ubicación.
+        Buscá por modelo o versión, filtrá por lo importante y ordená el inventario para encontrar oportunidades más rápido.
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
+        <div style={{ gridColumn: 'span 2', minWidth: 0 }}>
+          <label
+            style={{
+              display: 'block',
+              fontFamily: 'var(--font-body)',
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'var(--text-tertiary)',
+              marginBottom: 8,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Buscar unidad
+          </label>
+          <input
+            type="text"
+            placeholder="Ej. Amarok, Focus Titanium, Corolla..."
+            value={q}
+            onChange={e => update('q', e.target.value)}
+            className="input-field"
+            style={{ fontSize: 14 }}
+          />
+        </div>
+
+        <div>
+          <label
+            style={{
+              display: 'block',
+              fontFamily: 'var(--font-body)',
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'var(--text-tertiary)',
+              marginBottom: 8,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Ordenar por
+          </label>
+          <select value={sort} onChange={e => update('sort', e.target.value)} className="input-field" style={{ fontSize: 14 }}>
+            {SORT_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+        </div>
+
         <div>
           <label
             style={{
