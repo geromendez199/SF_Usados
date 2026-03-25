@@ -125,20 +125,6 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
                 >
                   Un showroom que hace que consultar sea tan fácil como decidir.
                 </p>
-                <p
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 'clamp(17px, 2.2vw, 21px)',
-                    fontWeight: 400,
-                    color: 'var(--text-tertiary)',
-                    maxWidth: 620,
-                    lineHeight: 1.6,
-                    letterSpacing: '-0.015em',
-                    marginTop: 18,
-                  }}
-                >
-                  Rediseñamos la experiencia para que cada publicación se sienta premium: mejor información, mejor confianza y una salida directa a WhatsApp cuando aparece el auto correcto.
-                </p>
               </div>
 
               <div className="hero-actions">
