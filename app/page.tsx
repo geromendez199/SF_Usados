@@ -6,6 +6,7 @@ import BrandMark from '@/components/BrandMark'
 import CarCard from '@/components/CarCard'
 import Filters from '@/components/Filters'
 import FloatingWhatsApp from '@/components/FloatingWhatsApp'
+import CompareTray from '@/components/CompareTray'
 import type { Listing } from '@/types'
 
 interface SP { brand?: string; province?: string; maxPrice?: string; yearFrom?: string; fuel?: string; q?: string; sort?: string }
@@ -483,6 +484,7 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
         </p>
       </footer>
 
+      <CompareTray listings={listings} />
       <FloatingWhatsApp href={waHref} />
     </main>
   )

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import type { Listing } from '@/types'
 import { formatPrice, formatKm, buildWhatsApp, timeAgo } from '@/lib/utils'
+import ListingActionButtons from './ListingActionButtons'
 
 const WA_NUMBER = '5493492273442'
 
@@ -48,6 +49,13 @@ export default function CarCard({ listing, index = 0 }: { listing: Listing; inde
               <span className="badge-featured">Destacado</span>
             </div>
           )}
+
+          <div
+            style={{ position: 'absolute', left: 14, bottom: 62, zIndex: 2 }}
+            onClick={e => e.preventDefault()}
+          >
+            <ListingActionButtons listingId={listing.id} compact />
+          </div>
 
           <div
             style={{

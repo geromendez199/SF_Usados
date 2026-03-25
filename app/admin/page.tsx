@@ -369,6 +369,39 @@ export default function AdminPage() {
     views: listings.reduce((a, l) => a + (l.views || 0), 0),
   }), [listings])
 
+  const insights = useMemo(() => {
+    const activeListings = listings.filter(l => l.is_active)
+    const topViewed = [...listings]
+      .sort((a, b) => (b.views || 0) - (a.views || 0))
+      .slice(0, 5)
+    const latestListings = [...listings]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 5)
+    const brandMap = new Map<string, number>()
+    for (const listing of activeListings) {
+      brandMap.set(listing.brand, (brandMap.get(listing.brand) || 0) + 1)
+    }
+    const topBrands = [...brandMap.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+    const averagePrice = activeListings.length > 0
+      ? Math.round(activeListings.reduce((sum, listing) => sum + listing.price, 0) / activeListings.length)
+      : 0
+    const averageKm = activeListings.length > 0
+      ? Math.round(activeListings.reduce((sum, listing) => sum + listing.km, 0) / activeListings.length)
+      : 0
+    const inactiveCount = listings.filter(l => !l.is_active).length
+
+    return {
+      topViewed,
+      latestListings,
+      topBrands,
+      averagePrice,
+      averageKm,
+      inactiveCount,
+    }
+  }, [listings])
+
   if (checkingSession) {
     return (
       <main style={{ minHeight: '100vh', background: '#0A0A0A', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
@@ -456,6 +489,82 @@ export default function AdminPage() {
               <p style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: '#444', marginTop: 4 }}>{s.label}</p>
             </div>
           ))}
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14, marginBottom: 28 }}>
+          <div style={{ background: '#111', border: '1px solid #1a1a1a', borderRadius: 16, padding: '20px 18px' }}>
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: '#555', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
+              Salud del inventario
+            </p>
+            <div style={{ display: 'grid', gap: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                <span style={{ color: '#555', fontSize: 13 }}>Precio promedio activo</span>
+                <strong style={{ color: '#fff', fontSize: 15 }}>US$ {insights.averagePrice.toLocaleString('es-AR')}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                <span style={{ color: '#555', fontSize: 13 }}>Kilometraje promedio</span>
+                <strong style={{ color: '#fff', fontSize: 15 }}>{insights.averageKm.toLocaleString('es-AR')} km</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                <span style={{ color: '#555', fontSize: 13 }}>Pausados</span>
+                <strong style={{ color: '#fff', fontSize: 15 }}>{insights.inactiveCount}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ background: '#111', border: '1px solid #1a1a1a', borderRadius: 16, padding: '20px 18px' }}>
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: '#555', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
+              Marcas con más stock
+            </p>
+            <div style={{ display: 'grid', gap: 10 }}>
+              {insights.topBrands.length > 0 ? insights.topBrands.map(([brand, count]) => (
+                <div key={brand} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                  <span style={{ color: '#ddd', fontSize: 14 }}>{brand}</span>
+                  <strong style={{ color: '#fff', fontSize: 14 }}>{count}</strong>
+                </div>
+              )) : (
+                <span style={{ color: '#555', fontSize: 13 }}>Sin datos todavía</span>
+              )}
+            </div>
+          </div>
+
+          <div style={{ background: '#111', border: '1px solid #1a1a1a', borderRadius: 16, padding: '20px 18px' }}>
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: '#555', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
+              Más vistos
+            </p>
+            <div style={{ display: 'grid', gap: 10 }}>
+              {insights.topViewed.length > 0 ? insights.topViewed.map(listing => (
+                <div key={listing.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                  <span style={{ color: '#ddd', fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {listing.brand} {listing.model}
+                  </span>
+                  <strong style={{ color: '#fff', fontSize: 14 }}>{listing.views || 0}</strong>
+                </div>
+              )) : (
+                <span style={{ color: '#555', fontSize: 13 }}>Sin visitas todavía</span>
+              )}
+            </div>
+          </div>
+
+          <div style={{ background: '#111', border: '1px solid #1a1a1a', borderRadius: 16, padding: '20px 18px' }}>
+            <p style={{ fontFamily: 'var(--font-body)', fontSize: 11, color: '#555', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
+              Últimas publicaciones
+            </p>
+            <div style={{ display: 'grid', gap: 10 }}>
+              {insights.latestListings.length > 0 ? insights.latestListings.map(listing => (
+                <div key={listing.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                  <span style={{ color: '#ddd', fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {listing.brand} {listing.model}
+                  </span>
+                  <strong style={{ color: '#555', fontSize: 12 }}>
+                    {new Date(listing.created_at).toLocaleDateString('es-AR')}
+                  </strong>
+                </div>
+              )) : (
+                <span style={{ color: '#555', fontSize: 13 }}>Sin publicaciones todavía</span>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Tabs */}

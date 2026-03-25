@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import FloatingWhatsApp from '@/components/FloatingWhatsApp'
+import ListingActionButtons from '@/components/ListingActionButtons'
 import { formatPrice, formatKm, buildWhatsApp, timeAgo } from '@/lib/utils'
 import type { Listing } from '@/types'
 
@@ -87,6 +88,9 @@ export default function CarDetail({ listing }: { listing: Listing }) {
                   {listing.version}
                 </p>
               )}
+              <div style={{ marginBottom: 16 }}>
+                <ListingActionButtons listingId={listing.id} />
+              </div>
               <p style={{ color: 'var(--text-tertiary)', lineHeight: 1.65, maxWidth: 720 }}>
                 Esta página está pensada para convertir interés en consulta real: muestra lo esencial, ordena mejor la información y deja listos los próximos pasos para reservar visita, pedir financiación o consultar permuta.
               </p>
