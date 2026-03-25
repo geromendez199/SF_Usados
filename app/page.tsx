@@ -1,5 +1,4 @@
 import { Suspense } from 'react'
-import Link from 'next/link'
 import { getSupabaseClient } from '@/lib/supabase'
 import Navbar from '@/components/Navbar'
 import BrandMark from '@/components/BrandMark'
@@ -12,51 +11,6 @@ import type { Listing } from '@/types'
 interface SP { brand?: string; province?: string; maxPrice?: string; yearFrom?: string; fuel?: string; q?: string; sort?: string }
 
 const WA_NUMBER = '5493492273442'
-
-const TRUST_POINTS = [
-  {
-    title: 'Contacto real, sin vueltas',
-    body: 'Consultás directo por WhatsApp y coordinás con atención humana, rápida y clara.',
-  },
-  {
-    title: 'Información visible desde el inicio',
-    body: 'Precio, kilometraje, año, combustible y ubicación para decidir con menos fricción.',
-  },
-  {
-    title: 'Selección enfocada en mover unidades',
-    body: 'Mostramos oportunidades concretas, no un catálogo inflado que te hace perder tiempo.',
-  },
-]
-
-const BENEFITS = [
-  {
-    title: 'Visitas más simples',
-    body: 'La web está pensada para que pases de mirar a coordinar una visita en minutos.',
-  },
-  {
-    title: 'Venta más confiable',
-    body: 'Sumamos señales de confianza, consejos de compra y una presentación mucho más profesional.',
-  },
-  {
-    title: 'Más intención de compra',
-    body: 'Los CTA, el orden del contenido y la jerarquía visual empujan mejor la conversión.',
-  },
-]
-
-const TESTIMONIALS = [
-  {
-    name: 'Luciano, Rafaela',
-    quote: 'La diferencia fue la claridad. Vi el auto, pregunté por WhatsApp y ese mismo día coordinamos para verlo.',
-  },
-  {
-    name: 'Camila, Santa Fe',
-    quote: 'La presentación transmite seriedad. Sentís que no estás escribiendo a un perfil improvisado.',
-  },
-  {
-    name: 'Martín, Esperanza',
-    quote: 'Entré por Instagram, pero la web me terminó de convencer porque ordena todo mucho mejor.',
-  },
-]
 
 async function getListings(sp: SP): Promise<Listing[]> {
   const supabase = getSupabaseClient()
@@ -247,60 +201,6 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
       </section>
 
       <div id="inventario" style={{ maxWidth: 1120, margin: '0 auto', padding: 'clamp(32px, 5vw, 48px) max(20px, env(safe-area-inset-left)) 120px max(20px, env(safe-area-inset-right))' }}>
-        <section className="section-shell" style={{ marginTop: 0 }}>
-          <div className="cta-grid">
-            <div className="premium-card">
-              <p className="apple-section-label" style={{ marginBottom: 12 }}>Nueva propuesta</p>
-              <h2 style={{ fontSize: 'clamp(28px, 4vw, 40px)', lineHeight: 1.08, letterSpacing: '-0.04em', marginBottom: 14 }}>
-                Una web que no solo muestra autos. Los vende mejor.
-              </h2>
-              <p>
-                Ordenamos el contenido para que la gente entienda rápido qué hay, por qué vale la pena y cómo avanzar al siguiente paso. Esto hace que el sitio se vea más serio y también convierta más.
-              </p>
-            </div>
-
-            <div className="premium-card">
-              <p className="apple-section-label" style={{ marginBottom: 12 }}>Acciones rápidas</p>
-              <div className="cta-list">
-                <a href="#filtros" className="btn-ghost" style={{ justifyContent: 'space-between' }}>
-                  Filtrar inventario ahora
-                  <span>→</span>
-                </a>
-                {latest && (
-                  <Link href={`/listing/${latest.id}`} className="btn-ghost" style={{ justifyContent: 'space-between' }}>
-                    Ver último ingreso
-                    <span>→</span>
-                  </Link>
-                )}
-                <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ width: '100%' }}>
-                  Hablar por WhatsApp
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="section-shell">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 22 }}>
-            <span className="apple-section-label">Confianza</span>
-            <div className="apple-divider-fade" />
-          </div>
-          <div className="trust-grid">
-            {TRUST_POINTS.map(item => (
-              <div key={item.title} className="trust-item">
-                <div className="trust-icon" aria-hidden>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path d="M12 3 4 7v6c0 5 3.5 7.74 8 9 4.5-1.26 8-4 8-9V7l-8-4Z" />
-                    <path d="m9.5 12 1.7 1.7L15 10" />
-                  </svg>
-                </div>
-                <strong>{item.title}</strong>
-                <span>{item.body}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-
         <Suspense fallback={null}>
           <div id="filtros" style={{ marginTop: 32 }}>
             <Filters />
@@ -377,74 +277,6 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
           </>
         )}
 
-        <section className="section-shell">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 22 }}>
-            <span className="apple-section-label">Qué mejora</span>
-            <div className="apple-divider-fade" />
-          </div>
-          <div className="benefit-grid">
-            {BENEFITS.map(item => (
-              <div key={item.title} className="benefit-item">
-                <strong>{item.title}</strong>
-                <span>{item.body}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="section-shell">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 22 }}>
-            <span className="apple-section-label">Prueba social</span>
-            <div className="apple-divider-fade" />
-          </div>
-          <div className="testimonial-grid">
-            {TESTIMONIALS.map(item => (
-              <div key={item.name} className="testimonial-item">
-                <div className="testimonial-rating" aria-hidden>
-                  {Array.from({ length: 5 }).map((_, i) => <span key={i}>★</span>)}
-                </div>
-                <strong>{item.name}</strong>
-                <span>{item.quote}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="section-shell">
-          <div className="cta-grid">
-            <div className="premium-card">
-              <p className="apple-section-label" style={{ marginBottom: 12 }}>Conversión directa</p>
-              <h2 style={{ fontSize: 'clamp(28px, 4vw, 38px)', lineHeight: 1.08, letterSpacing: '-0.04em', marginBottom: 14 }}>
-                Si alguien ya vio algo que le interesa, no debería tener que pensar qué hacer después.
-              </h2>
-              <div className="feature-list">
-                {[
-                  'WhatsApp visible desde cualquier parte de la web.',
-                  'Detalle más comercial para empujar consulta, visita y financiación.',
-                  'Secciones de confianza para reducir ansiedad de compra.',
-                ].map(text => (
-                  <div key={text} className="feature-list-item">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <path d="m5 13 4 4L19 7" />
-                    </svg>
-                    <span>{text}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="premium-card">
-              <p className="apple-section-label" style={{ marginBottom: 12 }}>Siguiente paso</p>
-              <h3>Listo para recibir consultas mejores</h3>
-              <p style={{ marginBottom: 20 }}>
-                La web ahora acompaña mejor la decisión. El próximo salto podría ser agregar comparador, financiación dinámica o testimonios reales desde el admin.
-              </p>
-              <a href={waHref} target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ width: '100%' }}>
-                Consultar ahora
-              </a>
-            </div>
-          </div>
-        </section>
       </div>
 
       <footer
