@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import BrandMark from './BrandMark'
 
 export default function Navbar() {
   return (
@@ -24,41 +23,28 @@ export default function Navbar() {
               textDecoration: 'none',
               display: 'flex',
               alignItems: 'center',
-              gap: 14,
               borderRadius: 12,
               marginLeft: -8,
               padding: '6px 8px',
             }}
           >
-            <BrandMark size="md" />
-            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: 14 }}>
-              <span
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 500,
-                  fontSize: 15,
-                  color: 'var(--text-secondary)',
-                  letterSpacing: '-0.02em',
-                  lineHeight: 1.15,
-                  display: 'block',
-                }}
-              >
-                _Usados
-              </span>
-              <span
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color: 'var(--text-tertiary)',
-                  marginTop: 2,
-                  display: 'block',
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                Santa Fe
-              </span>
-            </div>
+            <span
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 700,
+                fontSize: 30,
+                letterSpacing: '-0.045em',
+                lineHeight: 1,
+                background: 'linear-gradient(180deg, #ffffff 18%, #d9d9de 48%, #8e8e93 100%)',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+                WebkitTextFillColor: 'transparent',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              SF_Usados
+            </span>
           </Link>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

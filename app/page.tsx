@@ -43,7 +43,6 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
   const listings = await getListings(searchParams)
   const featured = listings.filter(l => l.is_featured)
   const regular = listings.filter(l => !l.is_featured)
-  const latest = listings[0]
   const brands = new Set(listings.map(listing => listing.brand)).size
   const locations = new Set(listings.map(listing => listing.city || listing.province)).size
   const sortedBy = searchParams.sort || 'newest'
@@ -92,7 +91,7 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
           <div className="hero-shell apple-fade-in">
             <div className="hero-copy">
               <p className="apple-eyebrow" style={{ marginBottom: -8 }}>
-                Showroom digital · Santa Fe
+                Showroom digital · Rafaela
               </p>
 
               <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 'clamp(12px, 3vw, 28px)' }}>
@@ -160,43 +159,7 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
               </div>
             </div>
 
-            <aside className="hero-stage">
-              <div className="hero-stage-panel">
-                <span className="hero-stage-kicker">
-                  <span className="apple-chip-dot" aria-hidden />
-                  Experiencia pensada para convertir
-                </span>
-
-                <div>
-                  <p style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px, 4vw, 40px)', letterSpacing: '-0.04em', lineHeight: 1.04 }}>
-                    Menos catálogo frío. Más decisión, confianza y contacto.
-                  </p>
-                  <p style={{ marginTop: 12, maxWidth: 420, color: 'var(--text-tertiary)', lineHeight: 1.6 }}>
-                    La nueva portada mezcla valor visual con intención comercial: explica rápido por qué mirar, por qué confiar y por qué escribir.
-                  </p>
-                </div>
-
-                <div className="hero-stage-grid">
-                  <div className="hero-stage-card">
-                    <strong>{featured.length}</strong>
-                    <span>unidades destacadas listas para empujar la consulta</span>
-                  </div>
-                  <div className="hero-stage-card">
-                    <strong>{latest ? latest.brand : 'SF'}</strong>
-                    <span>último ingreso visible desde el hero</span>
-                  </div>
-                  <div className="hero-stage-card">
-                    <strong>CTA directos</strong>
-                    <span>consulta, visita, financiación y permuta más claras</span>
-                  </div>
-                  <div className="hero-stage-card">
-                    <strong>Mejor confianza</strong>
-                    <span>señales comerciales para bajar la fricción de compra</span>
-                  </div>
-                </div>
-              </div>
-            </aside>
-          </div>
+            </div>
         </div>
       </section>
 
@@ -301,7 +264,7 @@ export default async function Home({ searchParams }: { searchParams: SP }) {
           </span>
         </div>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: 13, color: 'var(--text-tertiary)', marginBottom: 8, fontWeight: 500 }}>
-          Santa Fe, Argentina
+          Rafaela, Argentina
         </p>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: 12, color: 'var(--text-tertiary)', opacity: 0.85 }}>
           © {new Date().getFullYear()} ·{' '}
