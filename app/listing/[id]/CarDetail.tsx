@@ -342,7 +342,7 @@ export default function CarDetail({ listing }: { listing: Listing }) {
         </a>
       </div>
 
-      <FloatingWhatsApp href={waLink} label="Consultar esta unidad" sublabel="Disponible ahora" />
+      <FloatingWhatsApp href={waLink} />
     </main>
   )
 }
