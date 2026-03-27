@@ -1,11 +1,11 @@
 -- ============================================
--- SF_USADOS — Supabase Schema
+-- SF_USADOS — Supabase Schema (secure baseline)
 -- Ejecutar en SQL Editor de Supabase
 -- ============================================
 
 create extension if not exists "uuid-ossp";
 
-create table public.listings (
+create table if not exists public.listings (
   id uuid default uuid_generate_v4() primary key,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   title text not null,
@@ -30,40 +30,48 @@ create table public.listings (
   views integer default 0
 );
 
-create index listings_is_active_idx on public.listings (is_active);
-create index listings_is_featured_idx on public.listings (is_featured);
-create index listings_brand_idx on public.listings (brand);
-create index listings_province_idx on public.listings (province);
-create index listings_year_idx on public.listings (year);
-create index listings_price_idx on public.listings (price);
-create index listings_created_at_idx on public.listings (created_at desc);
+create index if not exists listings_is_active_idx on public.listings (is_active);
+create index if not exists listings_is_featured_idx on public.listings (is_featured);
+create index if not exists listings_brand_idx on public.listings (brand);
+create index if not exists listings_province_idx on public.listings (province);
+create index if not exists listings_year_idx on public.listings (year);
+create index if not exists listings_price_idx on public.listings (price);
+create index if not exists listings_created_at_idx on public.listings (created_at desc);
 
 alter table public.listings enable row level security;
 
-create policy "Public can view active listings"
-  on public.listings for select using (is_active = true);
+-- Replace insecure policies if they already exist.
+drop policy if exists "Public can view active listings" on public.listings;
+drop policy if exists "Anyone can insert listings" on public.listings;
+drop policy if exists "Anyone can update listings" on public.listings;
+drop policy if exists "Anyone can delete listings" on public.listings;
 
-create policy "Anyone can insert listings"
-  on public.listings for insert with check (true);
+drop policy if exists "Public read active listings" on public.listings;
 
-create policy "Anyone can update listings"
-  on public.listings for update using (true);
-
-create policy "Anyone can delete listings"
-  on public.listings for delete using (true);
+create policy "Public read active listings"
+  on public.listings
+  for select
+  to public
+  using (is_active = true);
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'listings', 'listings', true, 10485760,
   array['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic']
 )
-on conflict (id) do nothing;
+on conflict (id) do update
+set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
 
-create policy "Public can view listing images"
-  on storage.objects for select using (bucket_id = 'listings');
+drop policy if exists "Public can view listing images" on storage.objects;
+drop policy if exists "Anyone can upload listing images" on storage.objects;
+drop policy if exists "Anyone can delete listing images" on storage.objects;
+drop policy if exists "Public read listing images" on storage.objects;
 
-create policy "Anyone can upload listing images"
-  on storage.objects for insert with check (bucket_id = 'listings');
-
-create policy "Anyone can delete listing images"
-  on storage.objects for delete using (bucket_id = 'listings');
+create policy "Public read listing images"
+  on storage.objects
+  for select
+  to public
+  using (bucket_id = 'listings');
