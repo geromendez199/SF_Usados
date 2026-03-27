@@ -1,10 +1,13 @@
 import type { Listing } from '@/types'
+import { isAllowedListingsPublicUrl } from '@/lib/admin/storage'
 
 type ListingPayload = Partial<Omit<Listing, 'id' | 'created_at'>>
 
 const MAX_IMAGES = 8
 const MAX_STRING = 160
 const MAX_DESCRIPTION = 2000
+const MAX_KM = 5_000_000
+const MAX_PRICE = 1_000_000_000
 
 const normalizeString = (value: unknown, max = MAX_STRING) => {
   if (typeof value !== 'string') return null
@@ -31,13 +34,22 @@ const parseFloatNumber = (value: unknown, field: string, min = 0, max = Number.M
 
 const normalizeImages = (value: unknown) => {
   if (!Array.isArray(value)) return [] as string[]
+
   const cleaned = value
     .filter((item): item is string => typeof item === 'string')
     .map(item => item.trim())
     .filter(Boolean)
+
   if (cleaned.length > MAX_IMAGES) {
     throw new Error(`Máximo ${MAX_IMAGES} imágenes.`)
   }
+
+  for (const imageUrl of cleaned) {
+    if (!isAllowedListingsPublicUrl(imageUrl)) {
+      throw new Error('URL de imagen inválida o no autorizada.')
+    }
+  }
+
   return cleaned
 }
 
@@ -48,8 +60,8 @@ export const validateCreateListingPayload = (value: unknown) => {
   const brand = normalizeString(payload.brand)
   const model = normalizeString(payload.model)
   const year = parseInteger(payload.year, 'Año', 1900, new Date().getFullYear() + 1)
-  const km = parseInteger(payload.km, 'Kilometraje', 0)
-  const price = parseFloatNumber(payload.price, 'Precio', 0)
+  const km = parseInteger(payload.km, 'Kilometraje', 0, MAX_KM)
+  const price = parseFloatNumber(payload.price, 'Precio', 0, MAX_PRICE)
 
   if (!brand || !model) throw new Error('Marca y modelo son requeridos.')
 
@@ -102,8 +114,8 @@ export const validateListingPatchPayload = (value: unknown): Record<string, unkn
   if (typeof payload.is_active === 'boolean') updates.is_active = payload.is_active
   if (typeof payload.is_featured === 'boolean') updates.is_featured = payload.is_featured
 
-  if (payload.price !== undefined) updates.price = parseFloatNumber(payload.price, 'Precio', 0)
-  if (payload.km !== undefined) updates.km = parseInteger(payload.km, 'Kilometraje', 0)
+  if (payload.price !== undefined) updates.price = parseFloatNumber(payload.price, 'Precio', 0, MAX_PRICE)
+  if (payload.km !== undefined) updates.km = parseInteger(payload.km, 'Kilometraje', 0, MAX_KM)
   if (payload.year !== undefined) updates.year = parseInteger(payload.year, 'Año', 1900, new Date().getFullYear() + 1)
 
   if (payload.brand !== undefined) updates.brand = normalizeString(payload.brand)
@@ -118,18 +130,6 @@ export const validateListingPatchPayload = (value: unknown): Record<string, unkn
   if (payload.province !== undefined) updates.province = normalizeString(payload.province)
   if (payload.city !== undefined) updates.city = normalizeString(payload.city)
   if (payload.images !== undefined) updates.images = normalizeImages(payload.images)
-
-  if (updates.brand || updates.model || updates.version || updates.year) {
-    const year = typeof updates.year === 'number' ? updates.year : payload.year
-    const safeYear = year ? parseInteger(year, 'Año', 1900, new Date().getFullYear() + 1) : null
-    const baseBrand = typeof updates.brand === 'string' ? updates.brand : normalizeString(payload.brand)
-    const baseModel = typeof updates.model === 'string' ? updates.model : normalizeString(payload.model)
-    if (baseBrand && baseModel && safeYear) {
-      updates.title = [baseBrand, baseModel, updates.version ?? normalizeString(payload.version), safeYear]
-        .filter(Boolean)
-        .join(' ')
-    }
-  }
 
   if (Object.keys(updates).length === 0) {
     throw new Error('No hay campos válidos para actualizar.')

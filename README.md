@@ -48,6 +48,7 @@ npm run dev
   - `PATCH /api/admin/listings/[id]`
   - `DELETE /api/admin/listings/[id]`
 - Esas rutas validan sesión admin y usan **service role** del lado servidor.
+- El backend valida payloads (año/km/precio/moneda), restringe imágenes al bucket público `listings` y sólo acepta MIME permitidos en uploads.
 - Público:
   - puede leer solo `listings.is_active = true`
   - puede leer imágenes públicas del bucket `listings`

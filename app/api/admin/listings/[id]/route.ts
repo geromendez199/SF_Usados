@@ -1,18 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin/requireAdmin'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
+import { getStoragePathFromListingsPublicUrl } from '@/lib/admin/storage'
 import { validateListingPatchPayload } from '@/lib/admin/listingValidation'
 
-const extractStoragePathFromPublicUrl = (url: string) => {
-  try {
-    const parsed = new URL(url)
-    const marker = '/storage/v1/object/public/listings/'
-    const index = parsed.pathname.indexOf(marker)
-    if (index === -1) return null
-    return decodeURIComponent(parsed.pathname.slice(index + marker.length))
-  } catch {
-    return null
-  }
+const isValidUuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+
+const normalizeTitlePart = (value: unknown) => {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim().replace(/\s+/g, ' ')
+  return trimmed || null
+}
+
+const buildTitle = (brand: unknown, model: unknown, version: unknown, year: unknown) => {
+  const safeBrand = normalizeTitlePart(brand)
+  const safeModel = normalizeTitlePart(model)
+  const safeVersion = normalizeTitlePart(version)
+  const safeYear = typeof year === 'number' ? year : Number(year)
+
+  if (!safeBrand || !safeModel || !Number.isInteger(safeYear)) return null
+
+  return [safeBrand, safeModel, safeVersion, safeYear]
+    .filter(Boolean)
+    .join(' ')
 }
 
 export async function PATCH(
@@ -24,9 +34,39 @@ export async function PATCH(
 
   try {
     const { id } = await params
+    if (!isValidUuid(id)) {
+      return NextResponse.json({ ok: false, error: 'ID inválido.' }, { status: 400 })
+    }
+
     const body = await request.json()
     const updates = validateListingPatchPayload(body)
     const supabase = createServiceRoleSupabaseClient()
+
+    if (
+      updates.brand !== undefined ||
+      updates.model !== undefined ||
+      updates.version !== undefined ||
+      updates.year !== undefined
+    ) {
+      const { data: existing, error: existingError } = await supabase
+        .from('listings')
+        .select('brand, model, version, year')
+        .eq('id', id)
+        .single()
+
+      if (existingError) throw existingError
+
+      const title = buildTitle(
+        updates.brand ?? existing?.brand,
+        updates.model ?? existing?.model,
+        updates.version ?? existing?.version,
+        updates.year ?? existing?.year,
+      )
+
+      if (title) {
+        updates.title = title
+      }
+    }
 
     const { data, error } = await supabase
       .from('listings')
@@ -52,6 +92,10 @@ export async function DELETE(
 
   try {
     const { id } = await params
+    if (!isValidUuid(id)) {
+      return NextResponse.json({ ok: false, error: 'ID inválido.' }, { status: 400 })
+    }
+
     const supabase = createServiceRoleSupabaseClient()
 
     const { data: listing, error: loadError } = await supabase
@@ -70,7 +114,7 @@ export async function DELETE(
       : []
 
     const imagePaths = listingImages
-      .map(extractStoragePathFromPublicUrl)
+      .map(getStoragePathFromListingsPublicUrl)
       .filter((path): path is string => Boolean(path))
 
     if (imagePaths.length > 0) {
