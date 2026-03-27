@@ -47,7 +47,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, data }, { status: 201 })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'No se pudo crear la publicación.'
-    return NextResponse.json({ ok: false, error: message }, { status: 400 })
-  }
+  console.error('GET /api/admin/listings failed:', error)
+
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'object' && error !== null && 'message' in error
+        ? String((error as { message?: unknown }).message)
+        : JSON.stringify(error)
+
+  return NextResponse.json({ ok: false, error: message }, { status: 500 })
 }
