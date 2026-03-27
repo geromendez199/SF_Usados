@@ -9,6 +9,19 @@ import { MAX_IMAGE_FILE_BYTES } from '@/lib/admin/uploadRules'
 
 const WA_NUMBER = '5493492273442'
 const MAX_IMAGE_SIZE_MB = 3
+const MAX_IMAGES = 8
+const OPTIMIZED_IMAGE_MAX_DIMENSION = 1920
+const OPTIMIZED_IMAGE_QUALITY_STEPS = [0.86, 0.8, 0.74, 0.68]
+const OPTIMIZED_IMAGE_DIMENSION_STEPS = [1920, 1600, 1280]
+const SUPPORTED_INPUT_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'image/heif',
+])
+const HEIC_EXTENSIONS = ['.heic', '.heif']
 
 const labelStyle: React.CSSProperties = {
   display: 'block', fontFamily: 'var(--font-body)',
@@ -20,6 +33,8 @@ const inputStyle = { fontSize: 13, color: '#f5f5f5' }
 function PublishForm({ onSuccess }: { onSuccess: () => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
+  const [optimizing, setOptimizing] = useState(false)
+  const [optimizingMessage, setOptimizingMessage] = useState('')
   const [error, setError] = useState('')
   const [images, setImages] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
@@ -34,20 +49,110 @@ function PublishForm({ onSuccess }: { onSuccess: () => void }) {
   })
   const set = (k: string, v: string | boolean) => setForm(p => ({ ...p, [k]: v }))
 
-  const handleImages = (files: FileList | null) => {
-    if (!files) return
-    const newFiles = Array.from(files).slice(0, 8 - images.length)
+  const isHeicFile = (file: File) => {
+    if (file.type === 'image/heic' || file.type === 'image/heif') return true
+    return HEIC_EXTENSIONS.some(ext => file.name.toLowerCase().endsWith(ext))
+  }
 
-    for (const file of newFiles) {
-      if (file.size > MAX_IMAGE_FILE_BYTES) {
-        setError(`Cada imagen debe pesar menos de ${MAX_IMAGE_SIZE_MB} MB. "${file.name}" excede el límite.`)
-        return
+  const loadImageElement = (blob: Blob) => new Promise<HTMLImageElement>((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(blob)
+    const image = new Image()
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl)
+      resolve(image)
+    }
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error('No se pudo leer la imagen seleccionada.'))
+    }
+    image.src = objectUrl
+  })
+
+  const blobToFile = (blob: Blob, originalName: string) => {
+    const safeName = originalName.replace(/\.[^.]+$/, '') || 'foto'
+    return new File([blob], `${safeName}.jpg`, {
+      type: 'image/jpeg',
+      lastModified: Date.now(),
+    })
+  }
+
+  const optimizeImage = async (file: File): Promise<File> => {
+    if (!SUPPORTED_INPUT_MIME_TYPES.has(file.type) && !isHeicFile(file)) {
+      throw new Error(`"${file.name}" no tiene un formato compatible. Usá JPG, PNG, WEBP o HEIC.`)
+    }
+
+    if (isHeicFile(file)) {
+      throw new Error(`"${file.name}" está en HEIC/HEIF y no se pudo procesar en este navegador. Convertí la foto a JPG o PNG e intentá de nuevo.`)
+    }
+
+    const sourceBlob = file
+    const image = await loadImageElement(sourceBlob)
+
+    const canvas = document.createElement('canvas')
+    const context = canvas.getContext('2d')
+    if (!context) throw new Error('Tu navegador no permite optimizar imágenes.')
+
+    for (const maxDimension of OPTIMIZED_IMAGE_DIMENSION_STEPS) {
+      const sourceMaxDimension = Math.max(image.width, image.height)
+      const ratio = sourceMaxDimension > maxDimension ? maxDimension / sourceMaxDimension : 1
+      const targetWidth = Math.max(1, Math.round(image.width * ratio))
+      const targetHeight = Math.max(1, Math.round(image.height * ratio))
+
+      canvas.width = Math.min(targetWidth, OPTIMIZED_IMAGE_MAX_DIMENSION)
+      canvas.height = Math.min(targetHeight, OPTIMIZED_IMAGE_MAX_DIMENSION)
+      context.clearRect(0, 0, canvas.width, canvas.height)
+      context.drawImage(image, 0, 0, canvas.width, canvas.height)
+
+      for (const quality of OPTIMIZED_IMAGE_QUALITY_STEPS) {
+        const optimizedBlob = await new Promise<Blob | null>(resolve =>
+          canvas.toBlob(resolve, 'image/jpeg', quality),
+        )
+        if (!optimizedBlob) continue
+        if (optimizedBlob.size <= MAX_IMAGE_FILE_BYTES) {
+          return blobToFile(optimizedBlob, file.name)
+        }
       }
     }
 
+    throw new Error(`"${file.name}" sigue siendo muy pesada después de optimizarla. Probá con otra imagen.`)
+  }
+
+  const handleImages = async (files: FileList | null) => {
+    if (!files) return
+    const newFiles = Array.from(files).slice(0, MAX_IMAGES - images.length)
+    if (newFiles.length === 0) return
+
+    setOptimizing(true)
     setError('')
-    setImages(p => [...p, ...newFiles])
-    setPreviews(p => [...p, ...newFiles.map(f => URL.createObjectURL(f))])
+
+    const optimizedFiles: File[] = []
+    const processingErrors: string[] = []
+
+    for (const [index, file] of newFiles.entries()) {
+      setOptimizingMessage(`Optimizando ${index + 1} de ${newFiles.length}: ${file.name}`)
+      try {
+        const optimized = await optimizeImage(file)
+        if (optimized.size > MAX_IMAGE_FILE_BYTES) {
+          throw new Error(`"${file.name}" excede el límite de ${MAX_IMAGE_SIZE_MB} MB después de optimizarse.`)
+        }
+        optimizedFiles.push(optimized)
+      } catch (processError) {
+        const message = processError instanceof Error ? processError.message : `No se pudo procesar "${file.name}".`
+        processingErrors.push(message)
+      }
+    }
+
+    if (optimizedFiles.length > 0) {
+      setImages(p => [...p, ...optimizedFiles])
+      setPreviews(p => [...p, ...optimizedFiles.map(f => URL.createObjectURL(f))])
+    }
+
+    if (processingErrors.length > 0) {
+      setError(processingErrors.join(' '))
+    }
+
+    setOptimizing(false)
+    setOptimizingMessage('')
   }
 
   useEffect(() => {
@@ -113,6 +218,7 @@ function PublishForm({ onSuccess }: { onSuccess: () => void }) {
       const json = await res.json()
       if (!res.ok) throw new Error(json?.error || 'Error al publicar')
       setForm(p => ({ ...p, brand: '', model: '', version: '', km: '', price: '', color: '', engine: '', description: '', is_featured: false }))
+      previews.forEach(url => URL.revokeObjectURL(url))
       setImages([]); setPreviews([])
       onSuccess()
     } catch (e: unknown) {
@@ -230,22 +336,49 @@ function PublishForm({ onSuccess }: { onSuccess: () => void }) {
             <div key={i} style={{ position: 'relative', width: 84, height: 62, borderRadius: 8, overflow: 'hidden', border: '1px solid #2a2a2a' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={p} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              <button onClick={() => { setImages(a => a.filter((_, j) => j !== i)); setPreviews(a => a.filter((_, j) => j !== i)) }}
+              <button onClick={() => {
+                URL.revokeObjectURL(previews[i])
+                setImages(a => a.filter((_, j) => j !== i))
+                setPreviews(a => a.filter((_, j) => j !== i))
+              }}
                 style={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, background: '#cc0000', color: '#fff', border: 'none', borderRadius: '50%', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 ×
               </button>
             </div>
           ))}
-          {previews.length < 8 && (
-            <button onClick={() => fileInputRef.current?.click()}
-              style={{ width: 84, height: 62, borderRadius: 8, border: '1.5px dashed #2a2a2a', background: 'none', color: '#444', cursor: 'pointer', fontSize: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.2s, color 0.2s' }}
+          {previews.length < MAX_IMAGES && (
+            <button onClick={() => fileInputRef.current?.click()} disabled={optimizing || loading}
+              style={{
+                width: 84, height: 62, borderRadius: 8, border: '1.5px dashed #2a2a2a', background: 'none',
+                color: '#444', cursor: optimizing || loading ? 'not-allowed' : 'pointer', fontSize: 22,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'border-color 0.2s, color 0.2s',
+                opacity: optimizing || loading ? 0.5 : 1,
+              }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = '#666'; e.currentTarget.style.color = '#888' }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = '#2a2a2a'; e.currentTarget.style.color = '#444' }}>
               +
             </button>
           )}
         </div>
-        <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={e => handleImages(e.target.files)} />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
+          multiple
+          className="hidden"
+          onChange={async e => {
+            await handleImages(e.target.files)
+            e.currentTarget.value = ''
+          }}
+        />
+        <p style={{ marginTop: 8, fontFamily: 'var(--font-body)', fontSize: 12, color: '#555' }}>
+          Podés elegir fotos pesadas (incluyendo HEIC): se optimizan automáticamente antes de subirlas.
+        </p>
+        {optimizing && (
+          <p style={{ marginTop: 6, fontFamily: 'var(--font-body)', fontSize: 12, color: '#9A9A9A' }}>
+            {optimizingMessage || 'Optimizando imágenes...'}
+          </p>
+        )}
       </div>
 
       {/* Featured */}
@@ -263,9 +396,9 @@ function PublishForm({ onSuccess }: { onSuccess: () => void }) {
         </div>
       )}
 
-      <button onClick={handleSubmit} disabled={loading} className="btn-primary"
-        style={{ width: '100%', padding: '16px', fontSize: 15, opacity: loading ? 0.6 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}>
-        {loading ? 'Publicando...' : 'Publicar auto'}
+      <button onClick={handleSubmit} disabled={loading || optimizing} className="btn-primary"
+        style={{ width: '100%', padding: '16px', fontSize: 15, opacity: loading || optimizing ? 0.6 : 1, cursor: loading || optimizing ? 'not-allowed' : 'pointer' }}>
+        {optimizing ? 'Optimizando imágenes...' : loading ? 'Publicando...' : 'Publicar auto'}
       </button>
     </div>
   )
