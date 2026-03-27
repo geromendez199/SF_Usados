@@ -33,13 +33,6 @@ export default function CarDetail({ listing }: { listing: Listing }) {
     { label: 'Ubicación', value: listing.city ? `${listing.city}, ${listing.province}` : listing.province },
   ].filter(s => s.value)
 
-  const sellingPoints = [
-    'Contacto directo por WhatsApp con respuesta rápida.',
-    'Ficha clara para evaluar la unidad antes de coordinar.',
-    'Posibilidad de consultar financiación o permuta desde la misma página.',
-  ]
-
-
   useEffect(() => {
     fetch(`/api/listings/${listing.id}/view`, { method: 'POST' }).catch(() => null)
   }, [listing.id])
@@ -96,9 +89,6 @@ export default function CarDetail({ listing }: { listing: Listing }) {
               <div style={{ marginBottom: 16 }}>
                 <ListingActionButtons listingId={listing.id} />
               </div>
-              <p style={{ color: 'var(--text-tertiary)', lineHeight: 1.65, maxWidth: 720 }}>
-                Esta página está pensada para convertir interés en consulta real: muestra lo esencial, ordena mejor la información y deja listos los próximos pasos para reservar visita, pedir financiación o consultar permuta.
-              </p>
               <div className="detail-mini-stats">
                 <div className="detail-mini-stat">
                   <strong>{listing.year}</strong>
@@ -191,22 +181,6 @@ export default function CarDetail({ listing }: { listing: Listing }) {
               </div>
             )}
 
-            <div className="section-shell" style={{ marginTop: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 22 }}>
-                <span className="apple-section-label">Por qué empuja consulta</span>
-                <div className="apple-divider-fade" />
-              </div>
-              <div className="detail-selling-points">
-                {sellingPoints.map(point => (
-                  <div key={point} className="detail-bullet">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <path d="m5 13 4 4L19 7" />
-                    </svg>
-                    <span>{point}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
 
           <div className="detail-sidebar">
