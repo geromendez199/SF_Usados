@@ -5,8 +5,10 @@ import type { Listing } from '@/types'
 import { CAR_BRANDS, FUEL_TYPES, TRANSMISSION_TYPES, ARGENTINA_PROVINCES, YEAR_OPTIONS } from '@/types'
 import BrandMark from '@/components/BrandMark'
 import AdminListingsVirtualList from '@/components/AdminListingsVirtualList'
+import { MAX_IMAGE_FILE_BYTES } from '@/lib/admin/uploadRules'
 
 const WA_NUMBER = '5493492273442'
+const MAX_IMAGE_SIZE_MB = 3
 
 const labelStyle: React.CSSProperties = {
   display: 'block', fontFamily: 'var(--font-body)',
@@ -35,6 +37,15 @@ function PublishForm({ onSuccess }: { onSuccess: () => void }) {
   const handleImages = (files: FileList | null) => {
     if (!files) return
     const newFiles = Array.from(files).slice(0, 8 - images.length)
+
+    for (const file of newFiles) {
+      if (file.size > MAX_IMAGE_FILE_BYTES) {
+        setError(`Cada imagen debe pesar menos de ${MAX_IMAGE_SIZE_MB} MB. "${file.name}" excede el límite.`)
+        return
+      }
+    }
+
+    setError('')
     setImages(p => [...p, ...newFiles])
     setPreviews(p => [...p, ...newFiles.map(f => URL.createObjectURL(f))])
   }
@@ -46,6 +57,12 @@ function PublishForm({ onSuccess }: { onSuccess: () => void }) {
   }, [previews])
 
   const uploadImages = async (): Promise<string[]> => {
+    for (const file of images) {
+      if (file.size > MAX_IMAGE_FILE_BYTES) {
+        throw new Error(`Cada imagen debe pesar menos de ${MAX_IMAGE_SIZE_MB} MB. "${file.name}" excede el límite.`)
+      }
+    }
+
     const urls: string[] = []
     for (const file of images) {
       const formData = new FormData()

@@ -1,5 +1,6 @@
 import type { Listing } from '@/types'
 import { isAllowedListingsPublicUrl } from '@/lib/admin/storage'
+import { uploadRules } from '@/lib/admin/uploadRules'
 
 type ListingPayload = Partial<Omit<Listing, 'id' | 'created_at'>>
 
@@ -138,7 +139,4 @@ export const validateListingPatchPayload = (value: unknown): Record<string, unkn
   return updates
 }
 
-export const uploadRules = {
-  maxFileBytes: 10 * 1024 * 1024,
-  allowedMimeTypes: new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic']),
-}
+export { uploadRules }
