@@ -12,7 +12,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const filter = searchParams.get('filter')
 
-    let query = supabase.from('listings').select('*').order('created_at', { ascending: false })
+    let query = supabase
+      .from('listings')
+      .select('*')
+      .order('created_at', { ascending: false })
 
     if (filter === 'active') query = query.eq('is_active', true)
     if (filter === 'inactive') query = query.eq('is_active', false)
@@ -23,7 +26,15 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ ok: true, data: data ?? [] })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'No se pudo obtener publicaciones.'
+    console.error('GET /api/admin/listings failed:', error)
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as { message?: unknown }).message)
+          : JSON.stringify(error)
+
     return NextResponse.json({ ok: false, error: message }, { status: 500 })
   }
 }
@@ -47,14 +58,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true, data }, { status: 201 })
   } catch (error) {
-  console.error('GET /api/admin/listings failed:', error)
+    console.error('POST /api/admin/listings failed:', error)
 
-  const message =
-    error instanceof Error
-      ? error.message
-      : typeof error === 'object' && error !== null && 'message' in error
-        ? String((error as { message?: unknown }).message)
-        : JSON.stringify(error)
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'object' && error !== null && 'message' in error
+          ? String((error as { message?: unknown }).message)
+          : JSON.stringify(error)
 
-  return NextResponse.json({ ok: false, error: message }, { status: 500 })
+    return NextResponse.json({ ok: false, error: message }, { status: 500 })
+  }
 }
