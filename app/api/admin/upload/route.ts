@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto'
 import { requireAdmin } from '@/lib/admin/requireAdmin'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
 import { uploadRules } from '@/lib/admin/listingValidation'
+import { imageMimeToExtension } from '@/lib/admin/storage'
 
 export async function POST(request: NextRequest) {
   const unauthorized = requireAdmin(request)
@@ -24,7 +25,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: 'La imagen supera el tamaño máximo permitido.' }, { status: 400 })
     }
 
-    const ext = file.name.includes('.') ? file.name.split('.').pop() : 'jpg'
+    const ext = imageMimeToExtension[file.type]
+    if (!ext) {
+      return NextResponse.json({ ok: false, error: 'Extensión de archivo no permitida.' }, { status: 400 })
+    }
+
     const storagePath = `${new Date().toISOString().slice(0, 10)}/${randomUUID()}.${ext}`
     const bytes = await file.arrayBuffer()
 
