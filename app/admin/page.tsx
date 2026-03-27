@@ -47,19 +47,26 @@ function PublishForm({ onSuccess }: { onSuccess: () => void }) {
 
   const uploadImages = async (): Promise<string[]> => {
     const urls: string[] = []
-    for (const file of images) {
+
+    for (const [index, file] of images.entries()) {
       const formData = new FormData()
       formData.append('file', file)
+
       const res = await fetch('/api/admin/upload', {
         method: 'POST',
         body: formData,
       })
+
       const json = await res.json()
       if (!res.ok || !json?.data?.publicUrl) {
-        throw new Error(json?.error || 'No se pudo subir una imagen')
+        const stage = typeof json?.stage === 'string' ? ` [${json.stage}]` : ''
+        const serverMessage = typeof json?.error === 'string' ? json.error : 'No se pudo subir una imagen'
+        throw new Error(`Falló la imagen ${index + 1} (${file.name})${stage}: ${serverMessage}`)
       }
+
       urls.push(json.data.publicUrl)
     }
+
     return urls
   }
 
