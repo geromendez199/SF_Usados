@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { getSupabaseClient } from '@/lib/supabase'
+import { createPublicSupabaseClient } from '@/lib/supabase/public'
 import Navbar from '@/components/Navbar'
 import BrandMark from '@/components/BrandMark'
 import CarCard from '@/components/CarCard'
@@ -13,8 +13,7 @@ interface SP { brand?: string; province?: string; maxPrice?: string; yearFrom?: 
 const WA_NUMBER = '5493492273442'
 
 async function getListings(sp: SP): Promise<Listing[]> {
-  const supabase = getSupabaseClient()
-  if (!supabase) return []
+  const supabase = createPublicSupabaseClient()
 
   let q = supabase.from('listings').select('*')
     .eq('is_active', true)

@@ -1,13 +1,12 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getSupabaseClient } from '@/lib/supabase'
+import { createPublicSupabaseClient } from '@/lib/supabase/public'
 import { formatPrice } from '@/lib/utils'
 import type { Listing } from '@/types'
 import CarDetail from './CarDetail'
 
 async function getListing(id: string): Promise<Listing | null> {
-  const supabase = getSupabaseClient()
-  if (!supabase) return null
+  const supabase = createPublicSupabaseClient()
 
   const { data, error } = await supabase
     .from('listings')
@@ -57,11 +56,6 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
   const { id } = await params
   const listing = await getListing(id)
   if (!listing) notFound()
-
-  const supabase = getSupabaseClient()
-  if (supabase) {
-    supabase.from('listings').update({ views: (listing.views || 0) + 1 }).eq('id', listing.id).then()
-  }
 
   const productSchema = {
     '@context': 'https://schema.org',

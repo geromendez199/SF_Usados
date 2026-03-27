@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback, useDeferredValue, useMemo, useRef } from 'react'
-import { getSupabaseClient } from '@/lib/supabase'
 import type { Listing } from '@/types'
 import { CAR_BRANDS, FUEL_TYPES, TRANSMISSION_TYPES, ARGENTINA_PROVINCES, YEAR_OPTIONS } from '@/types'
 import BrandMark from '@/components/BrandMark'
@@ -17,7 +16,6 @@ const labelStyle: React.CSSProperties = {
 const inputStyle = { fontSize: 13, color: '#f5f5f5' }
 
 function PublishForm({ onSuccess }: { onSuccess: () => void }) {
-  const supabase = getSupabaseClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -48,47 +46,55 @@ function PublishForm({ onSuccess }: { onSuccess: () => void }) {
   }, [previews])
 
   const uploadImages = async (): Promise<string[]> => {
-    if (!supabase) throw new Error('Faltan variables de entorno de Supabase')
     const urls: string[] = []
     for (const file of images) {
-      const ext = file.name.split('.').pop()
-      const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      const { data, error } = await supabase.storage.from('listings').upload(filename, file, { contentType: file.type })
-      if (error) throw error
-      const { data: urlData } = supabase.storage.from('listings').getPublicUrl(data.path)
-      urls.push(urlData.publicUrl)
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      const json = await res.json()
+      if (!res.ok || !json?.data?.publicUrl) {
+        throw new Error(json?.error || 'No se pudo subir una imagen')
+      }
+      urls.push(json.data.publicUrl)
     }
     return urls
   }
 
   const handleSubmit = async () => {
-    if (!supabase) {
-      setError('Faltan variables de entorno de Supabase')
-      return
-    }
-
     if (!form.brand || !form.model || !form.year || !form.km || !form.price) {
       setError('Completá marca, modelo, año, km y precio'); return
     }
     setLoading(true); setError('')
     try {
       const imageUrls = images.length > 0 ? await uploadImages() : []
-      const title = [form.brand, form.model, form.version, form.year].filter(Boolean).join(' ')
-      const { error: e } = await supabase.from('listings').insert({
-        title, brand: form.brand, model: form.model,
-        version: form.version || null,
-        year: parseInt(form.year), km: parseInt(form.km),
-        price: parseFloat(form.price), currency: form.currency,
-        color: form.color || null, fuel: form.fuel || null,
-        engine: form.engine || null,
-        transmission: form.transmission || null,
-        description: form.description.trim(),
-        phone: form.phone.trim(), province: form.province,
-        city: form.city.trim() || null,
-        images: imageUrls, is_featured: form.is_featured,
-        is_active: true, views: 0,
+      const res = await fetch('/api/admin/listings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brand: form.brand,
+          model: form.model,
+          version: form.version,
+          year: parseInt(form.year),
+          km: parseInt(form.km),
+          price: parseFloat(form.price),
+          currency: form.currency,
+          color: form.color,
+          fuel: form.fuel,
+          engine: form.engine,
+          transmission: form.transmission,
+          description: form.description,
+          phone: form.phone,
+          province: form.province,
+          city: form.city,
+          images: imageUrls,
+          is_featured: form.is_featured,
+        }),
       })
-      if (e) throw e
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || 'Error al publicar')
       setForm(p => ({ ...p, brand: '', model: '', version: '', km: '', price: '', color: '', engine: '', description: '', is_featured: false }))
       setImages([]); setPreviews([])
       onSuccess()
@@ -249,7 +255,6 @@ function PublishForm({ onSuccess }: { onSuccess: () => void }) {
 }
 
 export default function AdminPage() {
-  const supabase = getSupabaseClient()
   const [authed, setAuthed] = useState(false)
   const [checkingSession, setCheckingSession] = useState(true)
   const [password, setPassword] = useState('')
@@ -277,10 +282,10 @@ export default function AdminPage() {
     checkSession()
   }, [])
 
-  const showToast = (msg: string, kind: 'ok' | 'err' = 'ok') => {
+  const showToast = useCallback((msg: string, kind: 'ok' | 'err' = 'ok') => {
     setToast({ msg, kind })
     setTimeout(() => setToast(null), 3500)
-  }
+  }, [])
 
   const login = async () => {
     setPwError('')
@@ -302,51 +307,68 @@ export default function AdminPage() {
   }
 
   const fetchListings = useCallback(async (silent = false) => {
-    if (!supabase) {
-      setListings([])
-      return
-    }
-
     if (!silent) setLoading(true)
-    let q = supabase.from('listings').select('*').order('created_at', { ascending: false })
-    if (filter === 'active') q = q.eq('is_active', true)
-    if (filter === 'inactive') q = q.eq('is_active', false)
-    if (filter === 'featured') q = q.eq('is_featured', true)
-    const { data } = await q.limit(200)
-    setListings((data as Listing[]) || [])
-    if (!silent) setLoading(false)
-  }, [filter, supabase])
+
+    try {
+      const params = new URLSearchParams()
+      if (filter !== 'all') params.set('filter', filter)
+      const res = await fetch(`/api/admin/listings?${params.toString()}`, { cache: 'no-store' })
+      const json = await res.json()
+
+      if (!res.ok) throw new Error(json?.error || 'No se pudieron cargar las publicaciones')
+
+      setListings((json?.data as Listing[]) || [])
+    } catch {
+      setListings([])
+      showToast('No se pudieron cargar las publicaciones', 'err')
+    } finally {
+      if (!silent) setLoading(false)
+    }
+  }, [filter, showToast])
 
   useEffect(() => { if (authed) fetchListings() }, [authed, fetchListings])
 
   const toggleActive = async (l: Listing) => {
-    if (!supabase) return
     const next = !l.is_active
     setListings(prev => prev.map(x => (x.id === l.id ? { ...x, is_active: next } : x)))
-    const { error } = await supabase.from('listings').update({ is_active: next }).eq('id', l.id)
-    if (error) {
+
+    const res = await fetch(`/api/admin/listings/${l.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: next }),
+    })
+
+    if (!res.ok) {
       setListings(prev => prev.map(x => (x.id === l.id ? { ...x, is_active: l.is_active } : x)))
       showToast('No se pudo actualizar el estado', 'err')
     }
   }
 
   const toggleFeatured = async (l: Listing) => {
-    if (!supabase) return
     const next = !l.is_featured
     setListings(prev => prev.map(x => (x.id === l.id ? { ...x, is_featured: next } : x)))
-    const { error } = await supabase.from('listings').update({ is_featured: next }).eq('id', l.id)
-    if (error) {
+
+    const res = await fetch(`/api/admin/listings/${l.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_featured: next }),
+    })
+
+    if (!res.ok) {
       setListings(prev => prev.map(x => (x.id === l.id ? { ...x, is_featured: l.is_featured } : x)))
       showToast('No se pudo actualizar destacado', 'err')
     }
   }
 
   const deleteListing = async (id: string) => {
-    if (!supabase) return
     if (!confirm('¿Eliminar este auto?')) return
     setListings(prev => prev.filter(x => x.id !== id))
-    const { error } = await supabase.from('listings').delete().eq('id', id)
-    if (error) {
+
+    const res = await fetch(`/api/admin/listings/${id}`, {
+      method: 'DELETE',
+    })
+
+    if (!res.ok) {
       showToast('No se pudo eliminar', 'err')
       void fetchListings(true)
     }

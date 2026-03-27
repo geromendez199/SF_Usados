@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
@@ -38,6 +38,11 @@ export default function CarDetail({ listing }: { listing: Listing }) {
     'Ficha clara para evaluar la unidad antes de coordinar.',
     'Posibilidad de consultar financiación o permuta desde la misma página.',
   ]
+
+
+  useEffect(() => {
+    fetch(`/api/listings/${listing.id}/view`, { method: 'POST' }).catch(() => null)
+  }, [listing.id])
 
   const trustPoints = [
     'Pedí más fotos, video o arranque en frío antes de visitar.',
