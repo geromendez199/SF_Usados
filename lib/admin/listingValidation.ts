@@ -140,5 +140,17 @@ export const validateListingPatchPayload = (value: unknown): Record<string, unkn
 
 export const uploadRules = {
   maxFileBytes: 10 * 1024 * 1024,
-  allowedMimeTypes: new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic']),
+  allowedMimeTypes: new Set([
+    'image/jpeg',
+    'image/jpg',
+    'image/pjpeg',
+    'image/png',
+    'image/x-png',
+    'image/webp',
+    'image/heic',
+    'image/heif',
+    'image/heic-sequence',
+    'image/heif-sequence',
+    'image/avif',
+  ]),
 }
