@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'crypto'
 import { requireAdmin } from '@/lib/admin/requireAdmin'
 import { createServiceRoleSupabaseClient } from '@/lib/supabase/server'
-import { uploadRules } from '@/lib/admin/listingValidation'
+import { uploadRules } from '@/lib/admin/uploadRules'
 import { imageMimeToExtension } from '@/lib/admin/storage'
 
 type UploadStage =
@@ -15,11 +15,25 @@ type UploadStage =
   | 'publicUrl'
 
 const getErrorMessage = (error: unknown) => {
-  if (error instanceof Error) return error.message
-  if (typeof error === 'object' && error !== null && 'message' in error) {
-    return String((error as { message?: unknown }).message)
+  const rawMessage =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'object' && error !== null && 'message' in error
+        ? String((error as { message?: unknown }).message)
+        : ''
+
+  const normalized = rawMessage.toLowerCase()
+  if (normalized.includes('too large') || normalized.includes('body exceeded')) {
+    return {
+      message: 'La imagen es demasiado pesada. Probá con una imagen de menos de 3 MB.',
+      status: 413,
+    }
   }
-  return 'No se pudo subir la imagen.'
+
+  return {
+    message: rawMessage || 'No se pudo subir la imagen.',
+    status: 400,
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -133,7 +147,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    const message = getErrorMessage(error)
+    const { message, status } = getErrorMessage(error)
 
     console.error('[admin/upload] failed', {
       stage,
@@ -149,7 +163,7 @@ export async function POST(request: NextRequest) {
             ? `Error al subir la imagen (${stage}): ${message}`
             : `Error al procesar la imagen (${stage}): ${message}`,
       },
-      { status: 400 },
+      { status },
     )
   }
 }
